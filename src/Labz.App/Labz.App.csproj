@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <!-- Compiles the Windows desktop project on non-Windows agents. The app still runs only on Windows. -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Labz.Core.Units\Labz.Core.Units.csproj" />
+    <ProjectReference Include="..\Labz.Core.Project\Labz.Core.Project.csproj" />
+    <ProjectReference Include="..\Labz.Core.Engine\Labz.Core.Engine.csproj" />
+    <ProjectReference Include="..\Labz.Core.Drawing\Labz.Core.Drawing.csproj" />
+    <ProjectReference Include="..\Labz.Modules.Circuits\Labz.Modules.Circuits.csproj" />
+  </ItemGroup>
+
+</Project>

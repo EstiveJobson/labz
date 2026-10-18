@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Labz.Core.Units\Labz.Core.Units.csproj" />
+    <ProjectReference Include="..\Labz.Core.Project\Labz.Core.Project.csproj" />
+    <ProjectReference Include="..\Labz.Core.Engine\Labz.Core.Engine.csproj" />
+    <ProjectReference Include="..\Labz.Core.Drawing\Labz.Core.Drawing.csproj" />
+  </ItemGroup>
+
+</Project>
