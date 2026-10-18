@@ -22,7 +22,7 @@ dotnet test -c Release --filter "Category!=Spice"
 dotnet run --project src/Labz.App/Labz.App.csproj -c Release
 ```
 
-`dotnet test` excludes tests tagged `[Trait("Category", "Spice")]`. Those arrive with ngspice in M3. CI runs the same build and test commands on `windows-2025`.
+Spice tests tagged `[Trait("Category", "Spice")]` are excluded only by the filtered command (`dotnet test --filter "Category!=Spice"`), not by plain `dotnet test`. Those tests arrive with ngspice in M3. CI runs the same build and the filtered test command on `windows-2025`.
 
 ## Repository layout
 
