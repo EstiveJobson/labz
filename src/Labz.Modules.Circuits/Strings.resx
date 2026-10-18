@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="MissingGround" xml:space="preserve">
+    <value>O circuito não tem terra (nó 0). Componentes: {0}.</value>
+  </data>
+  <data name="FloatingNode" xml:space="preserve">
+    <value>Nó flutuante ({0}). Componentes: {1}.</value>
+  </data>
+  <data name="VoltageSourceLoop" xml:space="preserve">
+    <value>Malha de fontes de tensão sem resistência: {0}.</value>
+  </data>
+  <data name="Singular" xml:space="preserve">
+    <value>A matriz do circuito é singular. Componentes: {0}.</value>
+  </data>
+  <data name="NoConvergence" xml:space="preserve">
+    <value>O solver de corrente contínua não convergiu. Componentes: {0}.</value>
+  </data>
+  <data name="PowerRatingOk" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="PowerRatingWarning" xml:space="preserve">
+    <value>atenção</value>
+  </data>
+  <data name="PowerRatingExceeded" xml:space="preserve">
+    <value>excede a potência</value>
+  </data>
+  <data name="Overcurrent" xml:space="preserve">
+    <value>Sobrecorrente em {0}: o LED está ligado diretamente a uma fonte de tensão ({1}).</value>
+  </data>
+  <data name="NameCollision" xml:space="preserve">
+    <value>O nome "{0}" é usado como componente e como rede.</value>
+  </data>
+  <data name="DuplicateComponent" xml:space="preserve">
+    <value>Já existe um componente com o identificador "{0}".</value>
+  </data>
+  <data name="NetIdRequired" xml:space="preserve">
+    <value>A rede precisa de um identificador.</value>
+  </data>
+  <data name="ComponentIdRequired" xml:space="preserve">
+    <value>O componente precisa de um identificador.</value>
+  </data>
+  <data name="UnknownComponent" xml:space="preserve">
+    <value>A rede "{0}" cita o componente desconhecido "{1}".</value>
+  </data>
+  <data name="UnknownPin" xml:space="preserve">
+    <value>O componente "{0}" não tem o pino "{1}".</value>
+  </data>
+  <data name="PinConnectedTwice" xml:space="preserve">
+    <value>O pino "{0}.{1}" está ligado mais de uma vez.</value>
+  </data>
+  <data name="PositiveFinite" xml:space="preserve">
+    <value>{0} deve ser um número finito maior que zero.</value>
+  </data>
+  <data name="NonNegativeFinite" xml:space="preserve">
+    <value>{0} deve ser um número finito maior ou igual a zero.</value>
+  </data>
+  <data name="FiniteValue" xml:space="preserve">
+    <value>{0} deve ser um número finito.</value>
+  </data>
+  <data name="DepthOfDischarge" xml:space="preserve">
+    <value>A profundidade de descarga deve ser um número finito entre 0 e 1.</value>
+  </data>
+</root>

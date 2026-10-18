@@ -8,4 +8,8 @@
     <ProjectReference Include="..\Labz.Core.Units\Labz.Core.Units.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Labz.Core.Engine.Tests" />
+  </ItemGroup>
+
 </Project>
