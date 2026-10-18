@@ -29,7 +29,7 @@ public sealed record EnergySettings(double? LoadHoursPerDay = null, double? Peak
         RequireNonNegative(PeakSunHours, nameof(PeakSunHours));
         if (!double.IsFinite(ChargeEfficiency) || ChargeEfficiency <= 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(ChargeEfficiency));
+            throw new ArgumentOutOfRangeException(nameof(ChargeEfficiency), Strings.PositiveFinite(nameof(ChargeEfficiency)));
         }
     }
 
@@ -42,7 +42,7 @@ public sealed record EnergySettings(double? LoadHoursPerDay = null, double? Peak
 
         if (!double.IsFinite(value.Value) || value.Value < 0)
         {
-            throw new ArgumentOutOfRangeException(name);
+            throw new ArgumentOutOfRangeException(name, Strings.NonNegativeFinite(name));
         }
     }
 }

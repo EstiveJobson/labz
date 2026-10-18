@@ -36,4 +36,40 @@
   <data name="PowerRatingExceeded" xml:space="preserve">
     <value>excede a potência</value>
   </data>
+  <data name="Overcurrent" xml:space="preserve">
+    <value>Sobrecorrente em {0}: o LED está ligado diretamente a uma fonte de tensão ({1}).</value>
+  </data>
+  <data name="NameCollision" xml:space="preserve">
+    <value>O nome "{0}" é usado como componente e como rede.</value>
+  </data>
+  <data name="DuplicateComponent" xml:space="preserve">
+    <value>Já existe um componente com o identificador "{0}".</value>
+  </data>
+  <data name="NetIdRequired" xml:space="preserve">
+    <value>A rede precisa de um identificador.</value>
+  </data>
+  <data name="ComponentIdRequired" xml:space="preserve">
+    <value>O componente precisa de um identificador.</value>
+  </data>
+  <data name="UnknownComponent" xml:space="preserve">
+    <value>A rede "{0}" cita o componente desconhecido "{1}".</value>
+  </data>
+  <data name="UnknownPin" xml:space="preserve">
+    <value>O componente "{0}" não tem o pino "{1}".</value>
+  </data>
+  <data name="PinConnectedTwice" xml:space="preserve">
+    <value>O pino "{0}.{1}" está ligado mais de uma vez.</value>
+  </data>
+  <data name="PositiveFinite" xml:space="preserve">
+    <value>{0} deve ser um número finito maior que zero.</value>
+  </data>
+  <data name="NonNegativeFinite" xml:space="preserve">
+    <value>{0} deve ser um número finito maior ou igual a zero.</value>
+  </data>
+  <data name="FiniteValue" xml:space="preserve">
+    <value>{0} deve ser um número finito.</value>
+  </data>
+  <data name="DepthOfDischarge" xml:space="preserve">
+    <value>A profundidade de descarga deve ser um número finito entre 0 e 1.</value>
+  </data>
 </root>

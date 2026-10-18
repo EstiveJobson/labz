@@ -18,12 +18,21 @@ public static class KnownUnits
 
     public static Unit Henry { get; } = new("H", Dimension.Inductance, 1);
 
+    /// <summary>Siemens. The symbol is capital S; lowercase s remains the second.</summary>
+    public static Unit Siemens { get; } = new("S", Dimension.Conductance, 1);
+
     public static Unit Second { get; } = new("s", Dimension.Time, 1);
 
     public static Unit Hertz { get; } = new("Hz", Dimension.Frequency, 1);
 
     /// <summary>1 Wh = 3600 J.</summary>
     public static Unit WattHour { get; } = new("Wh", Dimension.Energy, 3600);
+
+    /// <summary>
+    /// Watt-hours per day of a usage profile (P in watts times hours per day).
+    /// The dimension is <see cref="Dimension.EnergyPerDay"/>, not <see cref="Dimension.Energy"/>.
+    /// </summary>
+    public static Unit WattHourPerDay { get; } = new("Wh/day", Dimension.EnergyPerDay, 3600);
 
     /// <summary>1 Ah = 3600 C.</summary>
     public static Unit AmpereHour { get; } = new("Ah", Dimension.Charge, 3600);
@@ -42,9 +51,11 @@ public static class KnownUnits
         Watt,
         Farad,
         Henry,
+        Siemens,
         Second,
         Hertz,
         WattHour,
+        WattHourPerDay,
         AmpereHour,
         Dimensionless,
     ];
@@ -85,7 +96,7 @@ public static class KnownUnits
     {
         return TryGetCanonical(dimension, out var unit) && unit.Symbol.Length > 0
             ? unit.Symbol
-            : dimension.IsDimensionless ? "adimensional" : dimension.ToString();
+            : dimension.IsDimensionless ? Strings.Dimensionless() : dimension.ToString();
     }
 
     private static Dictionary<string, Unit> BuildSymbols()
@@ -105,11 +116,10 @@ public static class KnownUnits
         Add("W", Watt);
         Add("w", Watt);
         Add("F", Farad);
-        Add("f", Farad);
         Add("H", Henry);
         Add("h", Henry);
         Add("s", Second);
-        Add("S", Second);
+        Add("S", Siemens);
         Add("Hz", Hertz);
         Add("HZ", Hertz);
         Add("hz", Hertz);

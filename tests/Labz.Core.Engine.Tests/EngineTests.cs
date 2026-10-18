@@ -55,10 +55,14 @@ public class EngineTests
             Quantity.Of(3.0 / 15.1, KnownUnits.Ampere));
         Relative(runtime, 3.5 / (3.0 / 15.1)).Should().BeLessThanOrEqualTo(1e-12);
 
+        _formulas.Get("energy.Wh_day").Output.Dimension.Should().Be(Dimension.EnergyPerDay);
+        _formulas.Get("energy.Wh_day").Output.Dimension.Should().NotBe(Dimension.Energy);
+        _formulas.Get("energy.Wh_day").Output.Unit.Symbol.Should().Be("Wh/day");
+
         var autonomy = _formulas.EvaluateWorking(
             "energy.autonomy_d",
             Quantity.Of(42, KnownUnits.WattHour),
-            Quantity.Of(wh, KnownUnits.WattHour));
+            Quantity.Of(wh, KnownUnits.WattHourPerDay));
         Relative(autonomy, 42 / wh).Should().BeLessThanOrEqualTo(1e-12);
 
         var recharge = _formulas.EvaluateWorking(
@@ -91,6 +95,14 @@ public class EngineTests
 
         var singular = () => DenseLinearSolver.Solve(new double[,] { { 1, 2 }, { 2, 4 } }, [1, 2]);
         singular.Should().Throw<SingularLinearSystemException>();
+    }
+
+    [Fact]
+    public void Solve_factors_the_matrix_once()
+    {
+        var before = DenseLinearSolver.FactorizationCount;
+        DenseLinearSolver.Solve(new double[,] { { 3, 1 }, { 1, 2 } }, [5, 5]);
+        (DenseLinearSolver.FactorizationCount - before).Should().Be(1);
     }
 
     private static double Relative(double actual, double expected) =>

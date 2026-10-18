@@ -62,7 +62,7 @@ public static class StandardFormulas
         registry.Register(new Formula(
             "energy.Wh_day",
             [Port("P_source", Dimension.Power, KnownUnits.Watt), Port("hours_per_day", Dimension.Time, KnownUnits.Hour)],
-            Port("Wh_day", Dimension.Energy, KnownUnits.WattHour),
+            Port("Wh_per_day", Dimension.EnergyPerDay, KnownUnits.WattHourPerDay),
             args => args[0] * args[1]));
 
         registry.Register(new Formula(
@@ -93,14 +93,14 @@ public static class StandardFormulas
 
         registry.Register(new Formula(
             "energy.autonomy_d",
-            [Port("usable_Wh", Dimension.Energy, KnownUnits.WattHour), Port("Wh_day", Dimension.Energy, KnownUnits.WattHour)],
+            [Port("usable_Wh", Dimension.Energy, KnownUnits.WattHour), Port("Wh_per_day", Dimension.EnergyPerDay, KnownUnits.WattHourPerDay)],
             Port("autonomy_d", Dimension.Time, KnownUnits.Day),
             args => args[0] / args[1]));
 
         registry.Register(new Formula(
             "energy.charge_Wh_day",
             [Port("P_stored", Dimension.Power, KnownUnits.Watt), Port("peak_sun_hours", Dimension.Time, KnownUnits.Hour)],
-            Port("charge_Wh_day", Dimension.Energy, KnownUnits.WattHour),
+            Port("charge_Wh_per_day", Dimension.EnergyPerDay, KnownUnits.WattHourPerDay),
             args => args[0] * args[1]));
 
         registry.Register(new Formula(

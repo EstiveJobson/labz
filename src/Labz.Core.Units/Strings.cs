@@ -18,6 +18,18 @@ internal static class Strings
     public static string FormatInvalid(string text) =>
         Format("FormatInvalid", text);
 
+    public static string NonFinite(string text) =>
+        Format("NonFinite", text);
+
+    public static string AmbiguousSeparator(string text) =>
+        Format("AmbiguousSeparator", text);
+
+    public static string Dimensionless() => Format("Dimensionless");
+
+    public static string NotANumber() => Format("NotANumber");
+
+    public static string Infinity() => Format("Infinity");
+
     private static string Format(string name, params object[] args)
     {
         var template = ResourceManager.GetString(name, CultureInfo.InvariantCulture)

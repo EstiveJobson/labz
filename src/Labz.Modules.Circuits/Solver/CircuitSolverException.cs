@@ -53,3 +53,19 @@ public sealed class DcSolverConvergenceException : CircuitSolverException
     {
     }
 }
+
+public sealed class OvercurrentException : CircuitSolverException
+{
+    public OvercurrentException(string message, IReadOnlyList<string> componentIds)
+        : base(message, componentIds)
+    {
+    }
+}
+
+public sealed class CircuitNameCollisionException : CircuitSolverException
+{
+    public CircuitNameCollisionException(string message, IReadOnlyList<string> componentIds)
+        : base(message, componentIds)
+    {
+    }
+}

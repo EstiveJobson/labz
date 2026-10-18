@@ -25,6 +25,34 @@ internal static class Strings
 
     public static string PowerRatingExceeded => Get("PowerRatingExceeded");
 
+    public static string Overcurrent(string componentId, string others) =>
+        Format("Overcurrent", componentId, others);
+
+    public static string NameCollision(string name) => Format("NameCollision", name);
+
+    public static string DuplicateComponent(string id) => Format("DuplicateComponent", id);
+
+    public static string NetIdRequired() => Get("NetIdRequired");
+
+    public static string ComponentIdRequired() => Get("ComponentIdRequired");
+
+    public static string UnknownComponent(string netId, string componentId) =>
+        Format("UnknownComponent", netId, componentId);
+
+    public static string UnknownPin(string componentId, string pin) =>
+        Format("UnknownPin", componentId, pin);
+
+    public static string PinConnectedTwice(string componentId, string pin) =>
+        Format("PinConnectedTwice", componentId, pin);
+
+    public static string PositiveFinite(string name) => Format("PositiveFinite", name);
+
+    public static string NonNegativeFinite(string name) => Format("NonNegativeFinite", name);
+
+    public static string FiniteValue(string name) => Format("FiniteValue", name);
+
+    public static string DepthOfDischarge() => Get("DepthOfDischarge");
+
     private static string Get(string name)
     {
         return ResourceManager.GetString(name, CultureInfo.InvariantCulture)

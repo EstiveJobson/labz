@@ -21,4 +21,19 @@
   <data name="FormatInvalid" xml:space="preserve">
     <value>Não foi possível ler a quantidade "{0}".</value>
   </data>
+  <data name="NonFinite" xml:space="preserve">
+    <value>A quantidade "{0}" não é um número finito.</value>
+  </data>
+  <data name="AmbiguousSeparator" xml:space="preserve">
+    <value>O número "{0}" é ambíguo: um separador seguido de exatamente 3 dígitos pode ser milhar ou decimal.</value>
+  </data>
+  <data name="Dimensionless" xml:space="preserve">
+    <value>adimensional</value>
+  </data>
+  <data name="NotANumber" xml:space="preserve">
+    <value>indefinido</value>
+  </data>
+  <data name="Infinity" xml:space="preserve">
+    <value>infinito</value>
+  </data>
 </root>

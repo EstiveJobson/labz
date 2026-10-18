@@ -11,7 +11,7 @@ public sealed class DcSolver
 {
     public const double PowerBalanceToleranceWatts = 1e-9;
 
-    private const double StateCurrentTolerance = 1e-9;
+    private const double StateCurrentTolerance = 1e-6;
 
     private const double DirectionTolerance = 1e-8;
 
@@ -60,7 +60,7 @@ public sealed class DcSolver
         for (var iteration = 0; iteration < LedIterationLimit; iteration++)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            progress?.Report(Math.Min(0.9, (iteration + 1d) / LedIterationLimit));
+            var (bandStart, bandEnd) = ProgressBand(iteration);
 
             var key = string.Join('\n', ledsOn.Order(StringComparer.Ordinal));
             if (!seen.Add(key))
@@ -92,7 +92,13 @@ public sealed class DcSolver
                     floating.ToArray());
             }
 
-            var candidate = MnaAssembler.Solve(topology, ledsOn, cancellationToken);
+            var candidate = MnaAssembler.Solve(
+                topology,
+                ledsOn,
+                cancellationToken,
+                progress,
+                bandStart,
+                bandEnd);
             if (!UpdateLedStates(topology, leds, ledsOn, candidate))
             {
                 solved = candidate;
@@ -133,6 +139,14 @@ public sealed class DcSolver
                 var cathode = solved.Voltage(topology.Pin(led.Id, "K"));
                 if (anode - cathode > led.ForwardVoltage + StateCurrentTolerance)
                 {
+                    var trial = new HashSet<string>(ledsOn, StringComparer.Ordinal) { led.Id };
+                    if (topology.TryGetVoltageLoop(trial, out var loop) && loop.Contains(led.Id))
+                    {
+                        throw new OvercurrentException(
+                            Strings.Overcurrent(led.Id, Join(loop)),
+                            loop.ToArray());
+                    }
+
                     on.Add(led.Id);
                 }
             }
@@ -428,7 +442,7 @@ public sealed class DcSolver
                         var autonomy = _formulas.EvaluateWorking(
                             "energy.autonomy_d",
                             Quantity.Of(usableWh, KnownUnits.WattHour),
-                            Quantity.Of(whPerDay, KnownUnits.WattHour));
+                            Quantity.Of(whPerDay, KnownUnits.WattHourPerDay));
                         results.Add(Result(
                             prefix + ".autonomy.d",
                             autonomy,
@@ -486,6 +500,19 @@ public sealed class DcSolver
 
     private static EngineResult Result(string id, double value, string unit, string formulaId, IReadOnlyList<string> inputIds) =>
         new(id, value, unit, formulaId, inputIds);
+
+    private static (double Start, double End) ProgressBand(int iteration)
+    {
+        // The first attempt owns most of the bar, so a linear circuit reports
+        // factorization progress instead of a single 1/48 tick.
+        if (iteration == 0)
+        {
+            return (0.05, 0.9);
+        }
+
+        var start = 0.9 + (0.08 * (iteration - 1) / LedIterationLimit);
+        return (start, Math.Min(0.98, start + (0.08 / LedIterationLimit)));
+    }
 
     private static string Join(IEnumerable<string> ids)
     {

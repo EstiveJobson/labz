@@ -1,0 +1,186 @@
+using System.Diagnostics;
+using FluentAssertions;
+using Labz.Modules.Circuits;
+
+namespace Labz.Modules.Circuits.Tests;
+
+public class SolverEdgeTests
+{
+    private readonly DcSolver _solver = new();
+
+    [Fact]
+    public void Reverse_diode_at_minus_100_volts_converges()
+    {
+        var circuit = new CircuitBuilder()
+            .Add(new DcVoltageSourceComponent("V1", -100))
+            .Add(new ResistorComponent("R1", 1000))
+            .Add(new DiodeComponent("D1"))
+            .Add(new GroundComponent("GND"))
+            .Connect("N1", ("V1", "+"), ("R1", "1"))
+            .Connect("N2", ("R1", "2"), ("D1", "A"))
+            .Connect("0", ("V1", "-"), ("D1", "K"), ("GND", "g"))
+            .Build();
+
+        var solution = _solver.Solve(circuit);
+        var model = DiodePresets.In4148;
+        var current = solution.Get("D1.I").Value;
+        var junction = solution.Get("D1.V").Value - (current * model.SeriesResistance);
+        var predicted = model.SaturationCurrent * (Math.Exp(junction / (model.EmissionCoefficient * DiodePhysics.ThermalVoltage)) - 1);
+        Math.Abs(current - predicted).Should().BeLessThanOrEqualTo(1e-9);
+        Math.Abs(solution.Get("R1.I").Value - current).Should().BeLessThanOrEqualTo(1e-9);
+        current.Should().BeNegative();
+        solution.PowerBalanceOk.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Cancelling_a_long_ladder_stops_inside_elimination()
+    {
+        var circuit = Ladder(1800);
+        using var cts = new CancellationTokenSource();
+        Exception? error = null;
+        var watch = Stopwatch.StartNew();
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                _solver.Solve(circuit, cancellationToken: cts.Token);
+            }
+            catch (Exception ex)
+            {
+                error = ex;
+            }
+        });
+        thread.IsBackground = true;
+        thread.Start();
+        Thread.Sleep(100);
+        cts.Cancel();
+        var stopped = thread.Join(TimeSpan.FromMilliseconds(1500));
+        stopped.Should().BeTrue("the token is checked inside Gaussian elimination, so the solve must not run to completion");
+        error.Should().BeOfType<OperationCanceledException>();
+        watch.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(2));
+    }
+
+    [Fact]
+    public void Progress_is_reported_from_inside_the_solve()
+    {
+        var seen = new List<double>();
+        var progress = new SyncProgress(seen.Add);
+        _solver.Solve(Divider(), progress: progress);
+
+        seen[0].Should().Be(0);
+        seen[^1].Should().Be(1);
+        seen.Should().OnlyContain(value => value >= 0 && value <= 1);
+        seen.Should().Contain(value => value > 0.2 && value < 0.95);
+        seen.Count.Should().BeGreaterThan(3);
+    }
+
+    [Fact]
+    public void A_net_named_like_a_component_is_a_typed_portuguese_error()
+    {
+        var act = () => new CircuitBuilder()
+            .Add(new ResistorComponent("R1", 100))
+            .Add(new GroundComponent("GND"))
+            .Connect("R1", ("R1", "1"))
+            .Connect("0", ("R1", "2"), ("GND", "g"))
+            .Build();
+
+        var error = act.Should().Throw<CircuitNameCollisionException>().Which;
+        error.Message.Should().Contain("R1").And.Contain("componente").And.Contain("rede");
+        error.ComponentIds.Should().Contain("R1");
+    }
+
+    [Fact]
+    public void Invalid_component_values_use_portuguese_resource_text()
+    {
+        var resistance = () => new ResistorComponent("R1", double.NaN);
+        resistance.Should().Throw<ArgumentOutOfRangeException>().WithMessage("*finito*");
+
+        var pin = () => new CircuitBuilder()
+            .Add(new ResistorComponent("R1", 10))
+            .Connect("N", ("R1", "9"))
+            .Build();
+        pin.Should().Throw<ArgumentException>().WithMessage("*pino*");
+    }
+
+    [Fact]
+    public void Led_directly_across_a_source_reports_overcurrent()
+    {
+        var forward = new CircuitBuilder()
+            .Add(new DcVoltageSourceComponent("V1", 5))
+            .Add(new LedComponent("L1", 3))
+            .Add(new GroundComponent("GND"))
+            .Connect("N", ("V1", "+"), ("L1", "A"))
+            .Connect("0", ("V1", "-"), ("L1", "K"), ("GND", "g"))
+            .Build();
+
+        var error = _solver.Invoking(solver => solver.Solve(forward)).Should().Throw<OvercurrentException>().Which;
+        error.Message.Should().Contain("Sobrecorrente").And.Contain("L1");
+        error.Message.Should().NotContain("não convergiu");
+
+        var reverse = new CircuitBuilder()
+            .Add(new DcVoltageSourceComponent("V1", 5))
+            .Add(new LedComponent("L1", 3))
+            .Add(new GroundComponent("GND"))
+            .Connect("N", ("V1", "+"), ("L1", "K"))
+            .Connect("0", ("V1", "-"), ("L1", "A"), ("GND", "g"))
+            .Build();
+        var open = _solver.Solve(reverse);
+        open.Get("L1.I").Value.Should().BeApproximately(0, 1e-9);
+    }
+
+    [Fact]
+    public void Cir7_exactly_half_and_full_rating_are_warnings()
+    {
+        // CIR-7: under 50% is OK, 50–100% is "atenção", over 100% is an error.
+        // §9.6 is the numeric tolerance. §9.2 names 50% as the warning threshold and 100% as the error threshold.
+        Rating(800).Should().Be("atenção");
+        Rating(400).Should().Be("atenção");
+        Rating(200).Should().Be("excede a potência");
+    }
+
+    private string Rating(double ohms)
+    {
+        var circuit = new CircuitBuilder()
+            .Add(new DcVoltageSourceComponent("V1", 10))
+            .Add(new ResistorComponent("R1", ohms))
+            .Add(new GroundComponent("GND"))
+            .Connect("N", ("V1", "+"), ("R1", "1"))
+            .Connect("0", ("V1", "-"), ("R1", "2"), ("GND", "g"))
+            .Build();
+        return _solver.Solve(circuit).PowerRatings.Single().Message;
+    }
+
+    private static CircuitModel Divider() => new CircuitBuilder()
+        .Add(new DcVoltageSourceComponent("V1", 10))
+        .Add(new ResistorComponent("R1", 1000))
+        .Add(new ResistorComponent("R2", 1000))
+        .Add(new GroundComponent("GND"))
+        .Connect("N1", ("V1", "+"), ("R1", "1"))
+        .Connect("N2", ("R1", "2"), ("R2", "1"))
+        .Connect("0", ("V1", "-"), ("R2", "2"), ("GND", "g"))
+        .Build();
+
+    private static CircuitModel Ladder(int sections)
+    {
+        var builder = new CircuitBuilder()
+            .Add(new DcVoltageSourceComponent("V1", 10))
+            .Add(new GroundComponent("GND"))
+            .Connect("N0", ("V1", "+"))
+            .Connect("0", ("V1", "-"), ("GND", "g"));
+        for (var section = 0; section < sections; section++)
+        {
+            builder.Add(new ResistorComponent($"S{section}", 1000));
+            builder.Add(new ResistorComponent($"P{section}", 1000));
+            builder.Connect($"N{section}", ($"S{section}", "1"));
+            builder.Connect($"N{section + 1}", ($"S{section}", "2"), ($"P{section}", "1"));
+            builder.Connect("0", ($"P{section}", "2"));
+        }
+
+        return builder.Build();
+    }
+
+    private sealed class SyncProgress(Action<double> report) : IProgress<double>
+    {
+        public void Report(double value) => report(value);
+    }
+}

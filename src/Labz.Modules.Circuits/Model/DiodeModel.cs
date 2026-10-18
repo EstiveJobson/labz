@@ -13,22 +13,22 @@ public sealed record DiodeModel(
     {
         if (!double.IsFinite(SaturationCurrent) || SaturationCurrent <= 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(SaturationCurrent));
+            throw new ArgumentOutOfRangeException(nameof(SaturationCurrent), Strings.PositiveFinite(nameof(SaturationCurrent)));
         }
 
         if (!double.IsFinite(EmissionCoefficient) || EmissionCoefficient <= 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(EmissionCoefficient));
+            throw new ArgumentOutOfRangeException(nameof(EmissionCoefficient), Strings.PositiveFinite(nameof(EmissionCoefficient)));
         }
 
         if (!double.IsFinite(SeriesResistance) || SeriesResistance < 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(SeriesResistance));
+            throw new ArgumentOutOfRangeException(nameof(SeriesResistance), Strings.NonNegativeFinite(nameof(SeriesResistance)));
         }
 
         if (!double.IsFinite(BreakdownVoltage) || BreakdownVoltage <= 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(BreakdownVoltage));
+            throw new ArgumentOutOfRangeException(nameof(BreakdownVoltage), Strings.PositiveFinite(nameof(BreakdownVoltage)));
         }
     }
 }

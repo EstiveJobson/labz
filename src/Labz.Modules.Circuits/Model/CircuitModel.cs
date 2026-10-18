@@ -26,7 +26,7 @@ public abstract class CircuitComponent
     {
         if (string.IsNullOrWhiteSpace(id))
         {
-            throw new ArgumentException("A component id is required.", nameof(id));
+            throw new ArgumentException(Strings.ComponentIdRequired(), nameof(id));
         }
 
         Id = id;
@@ -71,7 +71,7 @@ public sealed class ResistorComponent : CircuitComponent
     {
         if (!double.IsFinite(value) || value <= 0)
         {
-            throw new ArgumentOutOfRangeException(name);
+            throw new ArgumentOutOfRangeException(name, Strings.PositiveFinite(name));
         }
     }
 }
@@ -83,7 +83,7 @@ public sealed class CapacitorComponent : CircuitComponent
     {
         if (!double.IsFinite(capacitanceFarads) || capacitanceFarads <= 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(capacitanceFarads));
+            throw new ArgumentOutOfRangeException(nameof(capacitanceFarads), Strings.PositiveFinite(nameof(capacitanceFarads)));
         }
 
         CapacitanceFarads = capacitanceFarads;
@@ -118,7 +118,7 @@ public sealed class InductorComponent : CircuitComponent
     {
         if (!double.IsFinite(inductanceHenries) || inductanceHenries <= 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(inductanceHenries));
+            throw new ArgumentOutOfRangeException(nameof(inductanceHenries), Strings.PositiveFinite(nameof(inductanceHenries)));
         }
 
         InductanceHenries = inductanceHenries;
@@ -178,7 +178,7 @@ public sealed class LedComponent : CircuitComponent
     {
         if (!double.IsFinite(forwardVoltage) || forwardVoltage <= 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(forwardVoltage));
+            throw new ArgumentOutOfRangeException(nameof(forwardVoltage), Strings.PositiveFinite(nameof(forwardVoltage)));
         }
 
         ForwardVoltage = forwardVoltage;
@@ -216,7 +216,7 @@ public sealed class DcVoltageSourceComponent : CircuitComponent
     {
         if (!double.IsFinite(voltage))
         {
-            throw new ArgumentOutOfRangeException(nameof(voltage));
+            throw new ArgumentOutOfRangeException(nameof(voltage), Strings.FiniteValue(nameof(voltage)));
         }
 
         Voltage = voltage;
@@ -246,12 +246,12 @@ public sealed class SolarPanelComponent : CircuitComponent
     {
         if (!double.IsFinite(openCircuitVoltage))
         {
-            throw new ArgumentOutOfRangeException(nameof(openCircuitVoltage));
+            throw new ArgumentOutOfRangeException(nameof(openCircuitVoltage), Strings.FiniteValue(nameof(openCircuitVoltage)));
         }
 
         if (!double.IsFinite(seriesResistance) || seriesResistance < 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(seriesResistance));
+            throw new ArgumentOutOfRangeException(nameof(seriesResistance), Strings.NonNegativeFinite(nameof(seriesResistance)));
         }
 
         OpenCircuitVoltage = openCircuitVoltage;
@@ -295,22 +295,22 @@ public sealed class BatteryComponent : CircuitComponent
     {
         if (!double.IsFinite(nominalVoltage))
         {
-            throw new ArgumentOutOfRangeException(nameof(nominalVoltage));
+            throw new ArgumentOutOfRangeException(nameof(nominalVoltage), Strings.FiniteValue(nameof(nominalVoltage)));
         }
 
         if (!double.IsFinite(internalResistance) || internalResistance < 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(internalResistance));
+            throw new ArgumentOutOfRangeException(nameof(internalResistance), Strings.NonNegativeFinite(nameof(internalResistance)));
         }
 
         if (!double.IsFinite(capacityAmpereHours) || capacityAmpereHours < 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(capacityAmpereHours));
+            throw new ArgumentOutOfRangeException(nameof(capacityAmpereHours), Strings.NonNegativeFinite(nameof(capacityAmpereHours)));
         }
 
         if (!double.IsFinite(usableDepthOfDischarge) || usableDepthOfDischarge is < 0 or > 1)
         {
-            throw new ArgumentOutOfRangeException(nameof(usableDepthOfDischarge));
+            throw new ArgumentOutOfRangeException(nameof(usableDepthOfDischarge), Strings.DepthOfDischarge());
         }
 
         NominalVoltage = nominalVoltage;
@@ -358,12 +358,12 @@ public sealed class SwitchComponent : CircuitComponent
     {
         if (!double.IsFinite(ronOhms) || ronOhms < 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(ronOhms));
+            throw new ArgumentOutOfRangeException(nameof(ronOhms), Strings.NonNegativeFinite(nameof(ronOhms)));
         }
 
         if (!double.IsFinite(roffOhms) || roffOhms < 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(roffOhms));
+            throw new ArgumentOutOfRangeException(nameof(roffOhms), Strings.NonNegativeFinite(nameof(roffOhms)));
         }
 
         State = state;
@@ -417,7 +417,7 @@ public sealed class CircuitBuilder
         ArgumentNullException.ThrowIfNull(component);
         if (!_ids.Add(component.Id))
         {
-            throw new ArgumentException($"Duplicate component id '{component.Id}'.", nameof(component));
+            throw new ArgumentException(Strings.DuplicateComponent(component.Id), nameof(component));
         }
 
         _components.Add(component);
@@ -428,7 +428,7 @@ public sealed class CircuitBuilder
     {
         if (string.IsNullOrWhiteSpace(netId))
         {
-            throw new ArgumentException("A net id is required.", nameof(netId));
+            throw new ArgumentException(Strings.NetIdRequired(), nameof(netId));
         }
 
         if (!_nets.TryGetValue(netId, out var connections))
@@ -464,21 +464,26 @@ internal static class CircuitValidator
         var seenPins = new HashSet<string>(StringComparer.Ordinal);
         foreach (var net in circuit.Nets)
         {
+            if (components.ContainsKey(net.Id))
+            {
+                throw new CircuitNameCollisionException(Strings.NameCollision(net.Id), [net.Id]);
+            }
+
             foreach (var connection in net.Connections)
             {
                 if (!components.TryGetValue(connection.ComponentId, out var component))
                 {
-                    throw new ArgumentException($"Net '{net.Id}' references unknown component '{connection.ComponentId}'.");
+                    throw new ArgumentException(Strings.UnknownComponent(net.Id, connection.ComponentId));
                 }
 
                 if (!component.Pins.Contains(connection.Pin, StringComparer.Ordinal))
                 {
-                    throw new ArgumentException($"Component '{component.Id}' has no pin '{connection.Pin}'.");
+                    throw new ArgumentException(Strings.UnknownPin(component.Id, connection.Pin));
                 }
 
                 if (!seenPins.Add(component.Id + "." + connection.Pin))
                 {
-                    throw new ArgumentException($"Pin '{component.Id}.{connection.Pin}' is connected more than once.");
+                    throw new ArgumentException(Strings.PinConnectedTwice(component.Id, connection.Pin));
                 }
             }
         }

@@ -32,12 +32,18 @@ internal static class MnaAssembler
 {
     private const int NewtonLimit = 80;
 
-    public static SolvedCircuit Solve(Topology topology, IReadOnlySet<string> ledsOn, CancellationToken cancellationToken)
+    public static SolvedCircuit Solve(
+        Topology topology,
+        IReadOnlySet<string> ledsOn,
+        CancellationToken cancellationToken,
+        IProgress<double>? progress = null,
+        double progressStart = 0,
+        double progressEnd = 1)
     {
         var diodes = topology.Circuit.Components.OfType<DiodeComponent>().ToArray();
         if (diodes.Length == 0)
         {
-            return SolveLinear(topology, ledsOn, linearization: null, cancellationToken);
+            return SolveLinear(topology, ledsOn, linearization: null, cancellationToken, progress, progressStart, progressEnd);
         }
 
         var linearization = new double[diodes.Length];
@@ -49,10 +55,13 @@ internal static class MnaAssembler
         }
 
         SolvedCircuit? solved = null;
+        var span = progressEnd - progressStart;
         for (var iteration = 0; iteration < NewtonLimit; iteration++)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            solved = SolveLinear(topology, ledsOn, linearization, cancellationToken);
+            var stepStart = progressStart + (span * iteration / NewtonLimit);
+            var stepEnd = progressStart + (span * (iteration + 1) / NewtonLimit);
+            solved = SolveLinear(topology, ledsOn, linearization, cancellationToken, progress, stepStart, stepEnd);
             var converged = true;
             for (var i = 0; i < diodes.Length; i++)
             {
@@ -63,7 +72,11 @@ internal static class MnaAssembler
                     converged = false;
                 }
 
-                linearization[i] = LimitDiodeStep(linearization[i], proposed, nVt);
+                linearization[i] = LimitJunctionVoltage(
+                    linearization[i],
+                    proposed,
+                    nVt,
+                    diodes[i].Model.SaturationCurrent);
             }
 
             if (converged)
@@ -96,7 +109,10 @@ internal static class MnaAssembler
         Topology topology,
         IReadOnlySet<string> ledsOn,
         double[]? linearization,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        IProgress<double>? progress,
+        double progressStart,
+        double progressEnd)
     {
         cancellationToken.ThrowIfCancellationRequested();
         var extras = CountVoltageUnknowns(topology, ledsOn);
@@ -164,7 +180,10 @@ internal static class MnaAssembler
         system.EnsureComplete();
         try
         {
-            return new SolvedCircuit(topology, system.Solve(), currents);
+            return new SolvedCircuit(
+                topology,
+                system.Solve(cancellationToken, progress, progressStart, progressEnd),
+                currents);
         }
         catch (SingularLinearSystemException)
         {
@@ -232,18 +251,31 @@ internal static class MnaAssembler
         conductance = Math.Max(0, model.SaturationCurrent * exponential / nVt);
     }
 
-    private static double LimitDiodeStep(double current, double proposed, double nVt)
+    /// <summary>
+    /// SPICE pnjlim. Large forward jumps are logged so the exponential stays finite.
+    /// Reverse bias is not clamped: a diode at -100 V must be allowed to sit there.
+    /// </summary>
+    private static double LimitJunctionVoltage(double previous, double proposed, double nVt, double saturationCurrent)
     {
-        var delta = proposed - current;
-        var maxStep = delta >= 0 ? Math.Max(2 * nVt, 0.05) : Math.Max(10 * nVt, 0.5);
-        var updated = Math.Abs(delta) <= maxStep ? proposed : current + (Math.Sign(delta) * maxStep);
-        var cap = 40 * nVt;
-        if (updated > cap)
+        if (nVt <= 0 || saturationCurrent <= 0 || !double.IsFinite(proposed))
         {
-            return cap;
+            return previous;
         }
 
-        return updated < -2 ? -2 : updated;
+        var vcrit = nVt * Math.Log(nVt / (Math.Sqrt(2) * saturationCurrent));
+        if (proposed > vcrit && Math.Abs(proposed - previous) > (2 * nVt))
+        {
+            if (previous > 0)
+            {
+                var argument = 1 + ((proposed - previous) / nVt);
+                return argument > 0 ? previous + (nVt * Math.Log(argument)) : vcrit;
+            }
+
+            var ratio = proposed / nVt;
+            return ratio > 0 ? nVt * Math.Log(ratio) : vcrit;
+        }
+
+        return proposed;
     }
 
     private static int CountVoltageUnknowns(Topology topology, IReadOnlySet<string> ledsOn)
@@ -329,7 +361,12 @@ internal static class MnaAssembler
             }
         }
 
-        public double[] Solve() => DenseLinearSolver.Solve(_matrix, _rhs);
+        public double[] Solve(
+            CancellationToken cancellationToken,
+            IProgress<double>? progress,
+            double progressStart,
+            double progressEnd) =>
+            DenseLinearSolver.Solve(_matrix, _rhs, cancellationToken, progress, progressStart, progressEnd);
 
         private void AddVoltage(int rowNode, int columnNode, double value)
         {
