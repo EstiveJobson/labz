@@ -6,7 +6,7 @@ Personal Windows desktop app for Sérgio: turns a plain-text hardware idea in Po
 
 ## Non-negotiable rules
 
-1. **The engine calculates, Grok explains. Grok never does math.** Every number comes from the engine (formulas and solvers unit-tested against hand-calculated reference values). Every number Grok shows must be quoted from engine output by resultId, never computed by Grok. Grok only: text idea → structured JSON proposal; explain engine results, flag anomalies, suggest next steps; propose value changes that the user accepts and the engine recalculates.
+1. **The engine calculates, Grok explains. Grok never does math.** Every number comes from the engine (formulas and solvers unit-tested against hand-calculated reference values). Every number Grok shows must be quoted from engine output by resultId, never computed by Grok. Grok only: text idea → structured JSON proposal; explain engine results, flag anomalies, suggest next steps; propose components and value changes that the user accepts and the engine recalculates. Every Grok proposal is marked "não verificado" until the engine recalculates.
 2. **The app generates the schematic by itself.** Schematics are auto-generated and auto-laid-out; the user only reviews and tweaks them. No drawing skill required.
 3. **Everything simulates.** Every module, now and later, must have a simulation path.
 4. **The UI is in Brazilian Portuguese (pt-BR).** All user-facing strings in `.resx`, pt-BR. Code, docs, commits and PRs in English.
@@ -31,4 +31,5 @@ Personal Windows desktop app for Sérgio: turns a plain-text hardware idea in Po
 - Everything Grok returns is strictly schema-validated (`circuit-proposal.v0`, `change-proposal.v0`); invalid proposals are rejected in full, never partially applied.
 - API key: Configurações (Windows DPAPI) or env var `XAI_API_KEY`. Never hardcoded, logged or committed.
 - Engine and units fully tested against REF-1 hand calcs; netlists checked against golden files.
+- SPEC.md and AGENTS.md at the repo root (no CURSOR.md). Local repo: `C:\Users\Serginho\LABZ`.
 - Branch + PR flow.

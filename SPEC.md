@@ -20,7 +20,7 @@ These override everything else. If code or a prompt would break one of them, sto
 
 | # | Rule | What it means in code |
 |---|---|---|
-| R1 | **The engine calculates, Grok explains. Grok never does math.** | Every number comes from the engine: formulas and solvers that are unit-tested against hand-calculated reference values. Every number Grok shows must be quoted from engine output, never computed by Grok. Grok must never produce computed values. |
+| R1 | **The engine calculates, Grok explains. Grok never does math.** | Every number comes from the engine: formulas and solvers that are unit-tested against hand-calculated reference values. Every number Grok shows must be quoted from engine output, never computed by Grok. Grok must never produce computed values. Grok proposals are marked "não verificado" until the engine recalculates (D5). |
 | R2 | **No drawing skill required: the app generates the schematic by itself.** | Schematics are auto-generated and auto-laid-out. The user only reviews and tweaks them. |
 | R3 | **Everything simulates.** | Every module, now and later, must have a simulation path. |
 | R4 | **The UI is in Brazilian Portuguese (pt-BR).** | All user-facing strings, messages and errors are pt-BR (strings in `.resx`). Docs, commits and PRs are in English. |
@@ -60,8 +60,12 @@ Related enforcement: AI-5 (system prompt forbids computing numbers), AI-6 / §7.
 
 **Core**
 - **Project workspace:** one project = one folder with `project.labz.json`, plus a `results/` cache and `history/` snapshots.
-- **Units:** SI base units with prefixes (p, n, µ, m, k, M, G). Quantities carry their dimension, so adding V to A is a compile-time or run-time error. Parsing accepts the pt-BR formats `"4,7 kΩ"`, `"4.7k"` and `"100 nF"`.
+- **Units:** SI base units with prefixes (p, n, µ, m, k, M, G, T). Quantities carry their dimension, so adding V to A is a compile-time or run-time error. Parsing accepts the pt-BR formats `"4,7 kΩ"`, `"4.7k"` and `"100 nF"`.
 - **Engine:** a registry of named, pure formulas plus solvers. Every result records its formula ID and inputs, so it can be traced and explained.
+  - **Switches:** ideal in the engine (open/closed). `Ron` and `Roff` exist only in the SPICE path (M3).
+  - **Diode model:** Shockley equation solved with Newton's method.
+  - **LED model:** fixed forward-voltage drop.
+  - **Charge efficiency:** fixed at 1.0 in v0 (not in the project JSON); becomes a parameter in a future version.
 - **Drawing canvas:** a geometry model for symbols, pins, wires and labels, plus auto-layout. Rendering lives in WPF.
 - **Assistant layer:** the Grok client, the context builder (which feeds Grok engine results only) and strict schema validation of everything Grok returns.
 
@@ -128,7 +132,7 @@ Related enforcement: AI-5 (system prompt forbids computing numbers), AI-6 / §7.
 4. **Simulação:** pick the analysis (OP, DC, AC, Transiente), its parameters, and "Simular", with a progress bar and cancel.
 5. **Resultados:** plots, the per-component table, energy cards (Wh/dia, autonomia, corrente de carga) and warnings.
 6. **Assistente (side panel):** chat with Grok, showing proposals as accept/reject cards.
-7. **Configurações:** xAI API key, model (default `grok-4.3`; `grok-4.7` offered for more complex cases; see §7.0), units display and autosave.
+7. **Configurações:** xAI API key, model (default `grok-4.3`; `grok-4.7` offered for more complex cases; see §7.0), units display and autosave (interval 1 to 60 min, default 2 min).
 
 **Flows**
 - **F1, new project from an idea:**
@@ -186,6 +190,8 @@ Related enforcement: AI-5 (system prompt forbids computing numbers), AI-6 / §7.
   "history": [ { "at": "...", "source": "user|grok", "change": "R1.resistance 150→180 Ω" } ]
 }
 ```
+Peak-sun hours are stored as a `usageProfiles` entry whose `target` equals the panel's id (e.g. `PV1`). Charge efficiency is not stored in the project JSON (fixed at 1.0 in v0).
+
 Results are not stored in the project file. They are cached in `results/` and can always be regenerated.
 
 ### 6.2 Component library v0
@@ -199,7 +205,7 @@ Results are not stored in the project file. They are cached in `results/` and ca
 | `dc_voltage_source` | +,− | voltage (V) | `V` |
 | `solar_panel` | +,− | v0 Thevenin model: openCircuitVoltage (V), seriesResistance (Ω); info only: ratedPower (W) | `V` + `R` subcircuit |
 | `battery` | +,− | nominalVoltage (V), internalResistance (Ω), capacity (Ah), usableDepthOfDischarge (0–1) | `V` + `R` subcircuit |
-| `switch` | 1,2 | state (open/closed), Ron (Ω, default 1 mΩ), Roff (Ω, default 1 GΩ) | `R` (state-dependent) |
+| `switch` | 1,2 | state (open/closed), Ron (Ω, default 1 mΩ), Roff (Ω, default 1 GΩ) | `R` (state-dependent); engine treats the switch as ideal, Ron/Roff used only in SPICE (M3) |
 | `ground` | g | — | node `0` |
 
 ---
@@ -209,6 +215,9 @@ Results are not stored in the project file. They are cached in `results/` and ca
 ### 7.0 Model
 - **Default model:** `grok-4.3` (US$1.25 per 1M input tokens, US$2.50 per 1M output tokens, 1M-token context).
 - The model is configurable in Settings (**Configurações** in the pt-BR UI). `grok-4.7` is offered as an option for more complex cases.
+
+### 7.0a Proposals are "not verified" until recalculated
+Grok may propose components and values, but every proposal is marked "not verified" (pt-BR UI label: **"não verificado"**) until the engine recalculates. Grok never shows a result it calculated itself.
 
 ### 7.1 Proposal: idea → circuit (Grok output schema `circuit-proposal.v0`)
 ```json
@@ -263,7 +272,7 @@ In order, the app checks:
 8. No voltage-source loops without resistance.
 9. Values are inside sane ranges, e.g. 1 mΩ ≤ R ≤ 1 TΩ.
 
-If any check fails, the proposal is rejected with a list of human-readable pt-BR reasons and is never partially applied. The app retries once automatically, sending the reasons back to Grok, then shows them to the user.
+If any check fails, the proposal is rejected with a list of human-readable pt-BR reasons and is never partially applied. The app retries once automatically (1 automatic retry, fixed in v0), sending the reasons back to Grok, then shows them to the user.
 
 When Grok's explanation text contains a number, the app checks it against the engine results. A number that does not match any result (within 0.5% after unit normalization) is highlighted as "não verificado".
 
@@ -286,8 +295,8 @@ When Grok's explanation text contains a number, the app checks it against the en
 ```
 labz/
 ├─ README.md                 # what/why, build steps
-├─ AGENTS.md / CURSOR.md     # context for AI tools (Arquivino)
-├─ docs/spec-v0-core-circuits.md
+├─ SPEC.md                   # full spec (this file)
+├─ AGENTS.md                 # short context for AI tools
 ├─ src/
 │  ├─ Labz.App/               # WPF, views, viewmodels, resx pt-BR
 │  ├─ Labz.Core.Units/
@@ -305,6 +314,8 @@ labz/
    ├─ Labz.Modules.Circuits.Tests/   # REF-1 hand-calc tests, netlist golden files
    └─ Labz.Spice.Tests/              # ngspice vs hand-calc
 ```
+SPEC.md and AGENTS.md live at the repo root (no CURSOR.md, no docs/spec file). Local repo: `C:\Users\Serginho\LABZ`; `EstiveJobson/labz` will be pushed to GitHub later.
+
 Engine projects reference no WPF assemblies, and a CI check enforces this.
 
 ---
@@ -319,7 +330,9 @@ Engine projects reference no WPF assemblies, and a CI check enforces this.
 - **LED strip:** 10 parallel branches. Each branch has 3 white LEDs in series (Vf = 3.0 V at 20 mA each, fixed-drop model in hand calcs) and a current-limiting resistor R = 150 Ω rated 0.25 W.
 - **S1** connects the panel ("dia"), and **S2** switches the load on.
 - **Usage:** LEDs on 6 h/day, and 5 peak-sun hours/day.
+  - *Decision D9:* peak-sun hours are stored as a `usageProfiles` entry with `target` = panel id (`PV1`).
 - Charge efficiency is 1.0 for this test (a parameter, default 1.0 in v0).
+  - *Decision D8:* in v0 charge efficiency is fixed at 1.0 and is not in the project JSON; it becomes a parameter in a future version.
 
 ```
  PV1(18V)──Rs 5Ω──S1──┬── N_BAT ──S2──┬──[150Ω]──▶|▶|▶|── 0   (×10 branches)
@@ -418,6 +431,7 @@ Each item is a test/checklist entry. Wording is kept from the draft.
 - [ ] **CORE-7** Engine assemblies have no reference to WPF or System.Windows. A CI check fails the build otherwise.
 - [ ] **CORE-8** Computations taking more than 200 ms run off the UI thread, show progress and can be cancelled within 1 s.
 - [ ] **CORE-9** Autosave every N minutes (default 2) into `history/`, keeping the last 20 snapshots.
+  - *Note (D7):* N ranges from 1 to 60 min.
 
 ### Circuits: model, editing, energy (CIR)
 - [ ] **CIR-1** All 10 v0 component types can be placed, configured with unit-checked params and saved.
@@ -427,6 +441,7 @@ Each item is a test/checklist entry. Wording is kept from the draft.
 - [ ] **CIR-5** The engine DC (MNA) solver reproduces REF-1 Scenarios A, B and C (§9.2–9.4) within 1e-6 relative error, for every listed current, voltage and power.
 - [ ] **CIR-6** The per-component table shows V across, I through and P (with sign convention: + = absorbing) for every component.
 - [ ] **CIR-7** Power-rating check: resistor P under 50% of rating is OK, 50–100% is a warning ("atenção"), and over 100% is an error ("excede a potência"). In REF-1 A, R = 150 Ω at 0.25 W gives OK. Changing it to 15 Ω (forcing about 200 mA per branch, if each LED still conducts) gives an error.
+  - *Note (D3):* for the 15 Ω case the test checks only the status "exceeds power rating" ("excede a potência").
 - [ ] **CIR-8** Energy: Wh/day = P_source × hours/day. REF-1 A gives 14.3046 Wh/day.
 - [ ] **CIR-9** Battery runtime = capacity × DoD / I_discharge. REF-1 A gives 17.617 h, and autonomy gives 2.936 days.
 - [ ] **CIR-10** Charge current and recharge time: REF-1 B gives 1.176471 A and 2.975 h, and REF-1 C gives a battery charge current of 0.974026 A.
@@ -439,6 +454,7 @@ Each item is a test/checklist entry. Wording is kept from the draft.
 - [ ] **SIM-4** `.tran` on the RC reference gives V_C(1 s) = 7.5854 V and V_C(5 s) = 11.919 V, both within 0.5%.
 - [ ] **SIM-5** `.ac` on the RC low-pass gives fc = 1591.55 Hz within 0.5%, and −3.01 dB ± 0.05 dB with −45° ± 0.5° at fc. A Bode plot is displayed.
 - [ ] **SIM-6** A `.dc` sweep of BAT1 from 9 to 13 V in REF-1 A gives a load current curve matching (V − 9)/15.1 within 3% for V ≥ 10 V. The curve is plotted.
+  - *Note (D4):* between 9 V and 10 V the result must be monotonic and continuous, checked in M3 against ngspice; no exact value is defined in v0.
 - [ ] **SIM-7** Simulations run in the background with progress and cancel. A cancelled run leaves the UI responsive and the project unchanged.
 - [ ] **SIM-8** ngspice errors and warnings are captured and shown in pt-BR context ("Erro na simulação: …"), with the raw log available.
 - [ ] **SIM-9** The LED model is fitted so that the ngspice diode at If = 20 mA gives Vf = 3.00 V ± 0.02 V (a unit test on the fitted model).
@@ -476,18 +492,23 @@ Each item is a test/checklist entry. Wording is kept from the draft.
 
 ---
 
-## 12. Open questions
+## 12. Resolved decisions
 
-### 12.1 From the draft (for Sérgio)
+Decided by Sérgio on 2026-10-18. Body sections are updated to match.
+
+| # | Topic | Decision | Applied in |
+|---|---|---|---|
+| D1 | Unit prefixes | The parser accepts prefixes up to T (tera). | §2 Units |
+| D2 | File names and paths | SPEC.md and AGENTS.md live at the repo root; there is no CURSOR.md and no docs/spec-v0-core-circuits.md. Local repo: `C:\Users\Serginho\LABZ`; `EstiveJobson/labz` will be pushed to GitHub later. | §8 |
+| D3 | CIR-7 (15 Ω) | The test checks only the status "exceeds power rating" ("excede a potência"). | §11 CIR-7 note |
+| D4 | DC sweep 9–10 V | The result must be monotonic and continuous, checked in M3 against ngspice; no exact value is defined in v0. | §11 SIM-6 note |
+| D5 | Grok boundary | Grok may propose components and values, but every proposal is marked "not verified" ("não verificado") until the engine recalculates. Grok never shows a result it calculated itself. | §1, §7.0a |
+| D6 | Retry | 1 automatic retry, fixed in v0. | §7.4 |
+| D7 | Autosave interval | 1 to 60 min (default stays 2 min). | §4 Configurações, CORE-9 note |
+| D8 | Charge efficiency | Fixed at 1.0 in v0, not in the project JSON; becomes a parameter in a future version. | §2 Engine, §6.1, §9.1 |
+| D9 | Peak-sun hours | Stored as a `usageProfiles` entry whose `target` equals the panel's id (e.g. `PV1`). | §6.1, §9.1 |
+| D10 | Switches (engine) | Ideal in the engine; Ron and Roff exist only in the SPICE path (M3). | §2 Engine, §6.2 |
+| D11 | Diode / LED model | Diode: Shockley equation solved with Newton's method. LED: fixed forward-voltage drop. | §2 Engine |
+
+### 12.1 Open questions
 1. Whether the next module after circuits should be thermal (a natural follow-on for heat in components) or mechanics.
-
-### 12.2 Ambiguities found while editing (not resolved; original meaning kept)
-1. **Unit prefixes vs ranges:** §2 lists prefixes p, n, µ, m, k, M, G, but §7.4 uses a sane range up to 1 TΩ (prefix T not listed). Should the parser support `T`?
-2. **Spec/context file location:** §8 repo layout lists `AGENTS.md / CURSOR.md` and `docs/spec-v0-core-circuits.md`; this deliverable is `SPEC.md` + `AGENTS.md` at the root. Decide the final names/paths (and whether `CURSOR.md` is needed).
-3. **CIR-7 15 Ω case:** "forcing about 200 mA per branch, if each LED still conducts" is approximate and conditional; the exact expected current/values for that test are not given (only the expected result: error).
-4. **DC sweep range:** §9.5 says the hand-calc formula holds "above 9 V"; SIM-6 checks only V ≥ 10 V within 3%. Behaviour/expectation between 9 and 10 V is unspecified.
-5. **Grok "flags anomalies" / "proposes value changes" vs "never does math":** where a proposed value (e.g. 150 Ω → 180 Ω) is chosen by Grok, it is not a computed result, but the boundary is not defined. Engine must recalculate after acceptance (F5).
-6. **Retry policy:** AI-2/§7.4 fix one automatic retry. Is "one retry" final, or should the retry policy be configurable (e.g. depending on credit budget)?
-7. **Autosave interval N:** CORE-9 gives default 2 minutes; Configurações lists "autosave" but the allowed range for N is not specified.
-8. **Charge efficiency:** §9.1 says it is a parameter (default 1.0 in v0) but it does not appear in the project JSON (§6.1) or the component table (§6.2). Where does it live?
-9. **Peak-sun hours:** §9.1 uses 5 peak-sun hours/day, but §6.1 `usageProfiles` only shows `hoursPerDay` for a load target; how charging hours are modeled is unspecified.
