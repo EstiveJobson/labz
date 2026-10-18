@@ -33,3 +33,14 @@ Personal Windows desktop app for Sérgio: turns a plain-text hardware idea in Po
 - Engine and units fully tested against REF-1 hand calcs; netlists checked against golden files.
 - SPEC.md and AGENTS.md at the repo root (no CURSOR.md). Local repo: `C:\Users\Serginho\LABZ`.
 - Branch + PR flow.
+
+## Commands
+
+From the repository root, with the .NET 10 SDK:
+
+```bash
+dotnet restore
+dotnet build -c Release
+dotnet test -c Release --filter "Category!=Spice"
+dotnet run --project src/Labz.App/Labz.App.csproj -c Release
+```
