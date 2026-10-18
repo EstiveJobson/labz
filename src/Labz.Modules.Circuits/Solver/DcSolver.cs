@@ -11,7 +11,7 @@ public sealed class DcSolver
 {
     public const double PowerBalanceToleranceWatts = 1e-9;
 
-    private const double StateCurrentTolerance = 1e-6;
+    private const double StateCurrentTolerance = 1e-9;
 
     private const double DirectionTolerance = 1e-8;
 

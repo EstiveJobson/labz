@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Text;
 
 namespace Labz.Core.Units;
 
@@ -8,15 +7,20 @@ namespace Labz.Core.Units;
 /// Prefixes are f, p, n, µ (also "u"), m, k, M, G and T. Tera is accepted because sane ranges go up to 1 TΩ.
 /// </summary>
 /// <remarks>
-/// A single separator followed by exactly three digits is rejected ("1.000", "1,000").
-/// That spelling is ambiguous: the group can be a thousands separator or a decimal fraction.
-/// One or two digits ("4,7", "1.00"), four or more ("1.0000"), a bare integer ("1000"),
-/// or both separators ("1.000,5") are accepted. RKM codes use the letter as the decimal point ("4K7" = 4.7 kΩ).
+/// A comma is always the decimal separator (pt-BR): "0,125" is 0.125 and "1,250" is 1.250.
+/// A dot is also a decimal separator, except one ambiguous pattern: a non-zero integer part of
+/// 1–3 digits, a dot, exactly three digits, and no exponent ("1.000", "12.500"). That pattern is
+/// rejected. Use a comma for the decimal and do not write a thousands separator.
+/// More than one separator, or both separators in the same number, is rejected.
+/// "0.125" and "1.000e3" stay decimal because the integer part is zero or an exponent is present.
+/// RKM codes ("4K7", "2R5") are accepted only for resistance, capacitance and inductance.
 /// The Unicode minus U+2212 is accepted wherever an ASCII hyphen-minus is.
 /// </remarks>
 public static class QuantityParser
 {
-    private const int MaxAbsoluteExponent = 308;
+    private const int MaxPositiveExponent = 308;
+
+    private const int MinExponent = -324;
 
     public static Quantity Parse(string text, Dimension expected)
     {
@@ -26,7 +30,7 @@ public static class QuantityParser
         }
 
         var source = text.Trim();
-        if (TryParseRkm(source, expected, out var rkm))
+        if (IsRkmDimension(expected) && TryParseRkm(source, expected, out var rkm))
         {
             return rkm;
         }
@@ -56,10 +60,20 @@ public static class QuantityParser
         }
 
         var unit = ResolveUnit(source, index, expected, text);
+        if (unit.Symbol == "h" && prefix != 1)
+        {
+            throw new QuantityFormatException(Strings.PrefixedHour());
+        }
+
         var value = number * prefix * unit.SiPerUnit;
         RejectUnlessFinite(text, value);
         return new Quantity(value, unit.Dimension);
     }
+
+    private static bool IsRkmDimension(Dimension dimension) =>
+        dimension == Dimension.Resistance
+        || dimension == Dimension.Capacitance
+        || dimension == Dimension.Inductance;
 
     private static bool TryParseRkm(string source, Dimension expected, out Quantity quantity)
     {
@@ -181,41 +195,59 @@ public static class QuantityParser
             return false;
         }
 
+        var integerStart = index;
         while (index < source.Length && char.IsDigit(source[index]))
         {
             index++;
         }
 
+        var integerPart = source[integerStart..index];
+        char? separator = null;
+        var sawComma = false;
+        var sawDot = false;
         var separatorCount = 0;
-        var digitsAfterSeparator = 0;
-        var lastSeparatorDigits = 0;
+        var fraction = string.Empty;
         if (index < source.Length && source[index] is ',' or '.')
         {
+            separator = source[index];
+            sawComma = separator == ',';
+            sawDot = separator == '.';
+            separatorCount = 1;
+            index++;
+            var fractionStart = index;
+            while (index < source.Length && char.IsDigit(source[index]))
+            {
+                index++;
+            }
+
+            fraction = source[fractionStart..index];
             while (index < source.Length && source[index] is ',' or '.')
             {
                 separatorCount++;
+                if (source[index] == ',')
+                {
+                    sawComma = true;
+                }
+                else
+                {
+                    sawDot = true;
+                }
+
                 index++;
-                var digitStart = index;
                 while (index < source.Length && char.IsDigit(source[index]))
                 {
                     index++;
                 }
-
-                lastSeparatorDigits = index - digitStart;
-                digitsAfterSeparator += lastSeparatorDigits;
-                if (index >= source.Length || source[index] is not (',' or '.'))
-                {
-                    break;
-                }
             }
         }
 
-        int? exponent = null;
+        long? exponent = null;
+        var hadExponent = false;
         if (index < source.Length && source[index] is 'e' or 'E')
         {
             var exponentMark = index;
             index++;
-            var exponentSign = 1;
+            var exponentSign = 1L;
             if (index < source.Length && source[index] is '+' or '-' or '\u2212')
             {
                 exponentSign = source[index] == '+' ? 1 : -1;
@@ -234,98 +266,57 @@ public static class QuantityParser
             }
             else
             {
-                exponent = exponentSign * int.Parse(source[exponentStart..index], CultureInfo.InvariantCulture);
+                hadExponent = true;
+                var exponentText = source[exponentStart..index];
+                if (!long.TryParse(exponentText, NumberStyles.None, CultureInfo.InvariantCulture, out var magnitude))
+                {
+                    throw new QuantityFormatException(Strings.NonFinite(source[start..index]));
+                }
+
+                exponent = exponentSign * magnitude;
             }
         }
 
-        if (index == start)
-        {
-            return false;
-        }
-
-        if (separatorCount == 1 && lastSeparatorDigits == 3)
+        if (separatorCount > 1 || (sawComma && sawDot))
         {
             throw new QuantityFormatException(Strings.AmbiguousSeparator(source[start..index]));
         }
 
-        if (exponent is int power && Math.Abs(power) > MaxAbsoluteExponent)
+        if (separator == '.' && !hadExponent && fraction.Length == 3 && IsAmbiguousInteger(integerPart))
+        {
+            throw new QuantityFormatException(Strings.AmbiguousSeparator(source[start..index]));
+        }
+
+        if (exponent is long power && (power > MaxPositiveExponent || power < MinExponent))
         {
             throw new QuantityFormatException(Strings.NonFinite(source[start..index]));
         }
 
-        var token = source[start..index];
-        var mantissa = exponent is null ? token : token[..token.IndexOfAny(['e', 'E'])];
-        if (!TryParseMantissa(mantissa, out var parsed))
+        var mantissa = fraction.Length == 0 ? integerPart : integerPart + "." + fraction;
+        var literal = exponent is long applied ? mantissa + "E" + applied.ToString(CultureInfo.InvariantCulture) : mantissa;
+        if (!double.TryParse(literal, NumberStyles.Float, CultureInfo.InvariantCulture, out number))
         {
             return false;
         }
 
-        if (exponent is int applied)
+        if (!double.IsFinite(number) && exponent is long overflowExponent && overflowExponent <= MaxPositiveExponent)
         {
-            parsed *= Math.Pow(10, applied);
+            var reduced = mantissa + "E" + (overflowExponent - MaxPositiveExponent).ToString(CultureInfo.InvariantCulture);
+            if (double.TryParse(reduced, NumberStyles.Float, CultureInfo.InvariantCulture, out var scaled)
+                && Math.Abs(scaled) <= 1.8)
+            {
+                number = Math.CopySign(double.MaxValue, scaled == 0 ? 1 : scaled);
+            }
         }
 
-        number = parsed;
         return true;
     }
 
-    private static bool TryParseMantissa(string mantissa, out double number)
-    {
-        var separators = 0;
-        foreach (var character in mantissa)
-        {
-            if (character is ',' or '.')
-            {
-                separators++;
-            }
-        }
-
-        if (separators <= 1)
-        {
-            return double.TryParse(mantissa.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out number);
-        }
-
-        var groups = new List<string>();
-        var current = new StringBuilder();
-        char? separator = null;
-        var mixed = false;
-        foreach (var character in mantissa)
-        {
-            if (character is ',' or '.')
-            {
-                if (separator is null)
-                {
-                    separator = character;
-                }
-                else if (separator != character)
-                {
-                    mixed = true;
-                }
-
-                groups.Add(current.ToString());
-                current.Clear();
-                continue;
-            }
-
-            current.Append(character);
-        }
-
-        groups.Add(current.ToString());
-        if (groups.Any(group => group.Length == 0))
-        {
-            number = 0;
-            return false;
-        }
-
-        if (!mixed && groups.Skip(1).All(group => group.Length == 3))
-        {
-            return double.TryParse(string.Concat(groups), NumberStyles.Float, CultureInfo.InvariantCulture, out number);
-        }
-
-        var fraction = groups[^1];
-        var whole = string.Concat(groups.Take(groups.Count - 1));
-        return double.TryParse(whole + "." + fraction, NumberStyles.Float, CultureInfo.InvariantCulture, out number);
-    }
+    /// <summary>True for "1", "12" and "123". "0", "01" and "1234" are ordinary decimals when followed by a dot.</summary>
+    private static bool IsAmbiguousInteger(string integerPart) =>
+        integerPart.Length is >= 1 and <= 3
+        && integerPart[0] != '0'
+        && integerPart.All(char.IsDigit);
 
     private static double ReadSign(string source, ref int index)
     {

@@ -98,11 +98,48 @@ public class EngineTests
     }
 
     [Fact]
-    public void Solve_factors_the_matrix_once()
+    public void Ill_conditioned_solve_refines_without_a_second_factorization()
     {
-        var before = DenseLinearSolver.FactorizationCount;
-        DenseLinearSolver.Solve(new double[,] { { 3, 1 }, { 1, 2 } }, [5, 5]);
-        (DenseLinearSolver.FactorizationCount - before).Should().Be(1);
+        // A = Q diag(1e7, 1e3, 10, 1) Q^T with a Householder Q. The right-hand side is the
+        // smallest singular direction, so the first residual sits above 1e-12 * ||rhs|| and
+        // the correction reuses the same factors.
+        var reflector = new double[] { 1, 2, 3, 4 };
+        var matrix = new double[4, 4];
+        var expected = new double[4];
+        var rhs = new double[4];
+        var spectrum = new double[] { 1e7, 1e3, 10, 1 };
+        for (var row = 0; row < 4; row++)
+        {
+            for (var column = 0; column < 4; column++)
+            {
+                var orthogonal = (row == column ? 1 : 0) - (reflector[row] * reflector[column] / 15d);
+                expected[row] += orthogonal * (column == 3 ? 1 : 0);
+                for (var mode = 0; mode < 4; mode++)
+                {
+                    var left = (row == mode ? 1 : 0) - (reflector[row] * reflector[mode] / 15d);
+                    var right = (column == mode ? 1 : 0) - (reflector[mode] * reflector[column] / 15d);
+                    matrix[row, column] += left * spectrum[mode] * right;
+                }
+            }
+        }
+
+        for (var row = 0; row < 4; row++)
+        {
+            for (var column = 0; column < 4; column++)
+            {
+                rhs[row] += matrix[row, column] * expected[column];
+            }
+        }
+
+        var factorsBefore = DenseLinearSolver.FactorizationCount;
+        var refinementsBefore = DenseLinearSolver.RefinementCount;
+        var solution = DenseLinearSolver.Solve(matrix, rhs);
+        (DenseLinearSolver.FactorizationCount - factorsBefore).Should().Be(1);
+        (DenseLinearSolver.RefinementCount - refinementsBefore).Should().BeGreaterThan(0);
+        for (var index = 0; index < expected.Length; index++)
+        {
+            solution[index].Should().BeApproximately(expected[index], 1e-6);
+        }
     }
 
     private static double Relative(double actual, double expected) =>

@@ -4,7 +4,7 @@ namespace Labz.Core.Units;
 
 /// <summary>
 /// Formats a quantity with an engineering prefix and a pt-BR decimal comma. Default is four significant digits.
-/// The text never uses a single separator followed by exactly three digits, because that form is ambiguous to the parser.
+/// Trailing zeros after the comma are stripped, so 1500 Ω is "1,5 kΩ".
 /// Non-finite values and subnormals are written as words or scientific notation, never as "NaN".
 /// </summary>
 public static class QuantityFormatter
@@ -15,7 +15,7 @@ public static class QuantityFormatter
     {
         if (significantDigits < 1)
         {
-            throw new ArgumentOutOfRangeException(nameof(significantDigits), "Significant digits must be at least 1.");
+            throw new ArgumentOutOfRangeException(nameof(significantDigits), Strings.SignificantDigits());
         }
 
         if (!KnownUnits.TryGetCanonical(quantity.Dimension, out var unit))
@@ -110,13 +110,7 @@ public static class QuantityFormatter
             }
 
             var decimals = DecimalPlaces(rounded, significantDigits);
-            if (decimals == 3)
-            {
-                // "1,000" is ambiguous (thousands group vs decimal). One extra trailing zero keeps it a decimal.
-                decimals = 4;
-            }
-
-            var digits = rounded.ToString("F" + decimals, CultureInfo.InvariantCulture).Replace('.', ',');
+            var digits = TrimTrailingZeros(rounded.ToString("F" + decimals, CultureInfo.InvariantCulture).Replace('.', ','));
             if (digits.Contains("NaN", StringComparison.OrdinalIgnoreCase))
             {
                 return Join(sign + Scientific(absolute, significantDigits), string.Empty, symbol);
@@ -130,8 +124,30 @@ public static class QuantityFormatter
 
     private static string Scientific(double absolute, int significantDigits)
     {
-        var text = absolute.ToString("E" + significantDigits, CultureInfo.InvariantCulture);
+        var text = absolute.ToString("E" + Math.Max(0, significantDigits - 1), CultureInfo.InvariantCulture);
         return text.Replace('.', ',');
+    }
+
+    private static string TrimTrailingZeros(string digits)
+    {
+        var comma = digits.IndexOf(',');
+        if (comma < 0)
+        {
+            return digits;
+        }
+
+        var end = digits.Length;
+        while (end > comma + 1 && digits[end - 1] == '0')
+        {
+            end--;
+        }
+
+        if (end == comma + 1)
+        {
+            end--;
+        }
+
+        return digits[..end];
     }
 
     private static string Join(string number, string prefix, string symbol)

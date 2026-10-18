@@ -39,6 +39,8 @@ public static class KnownUnits
 
     public static Unit Hour { get; } = new("h", Dimension.Time, 3600);
 
+    public static Unit Minute { get; } = new("min", Dimension.Time, 60);
+
     public static Unit Day { get; } = new("d", Dimension.Time, 86400);
 
     public static Unit Dimensionless { get; } = new("", Dimension.None, 1);
@@ -84,7 +86,7 @@ public static class KnownUnits
             return unit;
         }
 
-        throw new ArgumentException($"No named v0 unit exists for dimension {dimension}.", nameof(dimension));
+        throw new ArgumentException(Strings.NoNamedUnit(), nameof(dimension));
     }
 
     public static bool TryParseSymbol(string token, out Unit unit)
@@ -126,6 +128,10 @@ public static class KnownUnits
         Add("Wh", WattHour);
         Add("WH", WattHour);
         Add("wh", WattHour);
+        Add("Wh/day", WattHourPerDay);
+        Add("wh/day", WattHourPerDay);
+        Add("min", Minute);
+        Add("d", Day);
         Add("Ah", AmpereHour);
         Add("AH", AmpereHour);
         Add("ah", AmpereHour);

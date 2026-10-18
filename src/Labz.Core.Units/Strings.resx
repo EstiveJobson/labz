@@ -25,7 +25,19 @@
     <value>A quantidade "{0}" não é um número finito.</value>
   </data>
   <data name="AmbiguousSeparator" xml:space="preserve">
-    <value>O número "{0}" é ambíguo: um separador seguido de exatamente 3 dígitos pode ser milhar ou decimal.</value>
+    <value>O número "{0}" é ambíguo. Use vírgula para decimais e não use separador de milhar.</value>
+  </data>
+  <data name="PrefixedHour" xml:space="preserve">
+    <value>Não use prefixo na unidade hora.</value>
+  </data>
+  <data name="DivideByZero" xml:space="preserve">
+    <value>Não é possível dividir uma grandeza por zero.</value>
+  </data>
+  <data name="SignificantDigits" xml:space="preserve">
+    <value>O número de algarismos significativos deve ser pelo menos 1.</value>
+  </data>
+  <data name="NoNamedUnit" xml:space="preserve">
+    <value>Não há uma unidade nomeada para essa dimensão.</value>
   </data>
   <data name="Dimensionless" xml:space="preserve">
     <value>adimensional</value>

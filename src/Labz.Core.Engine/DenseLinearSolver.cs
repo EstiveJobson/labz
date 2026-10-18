@@ -7,7 +7,13 @@ namespace Labz.Core.Engine;
 /// </summary>
 public static class DenseLinearSolver
 {
-    internal static int FactorizationCount { get; private set; }
+    private static int _factorizationCount;
+
+    private static int _refinementCount;
+
+    internal static int FactorizationCount => Interlocked.CompareExchange(ref _factorizationCount, 0, 0);
+
+    internal static int RefinementCount => Interlocked.CompareExchange(ref _refinementCount, 0, 0);
 
     public static double[] Solve(
         double[,] matrix,
@@ -27,16 +33,18 @@ public static class DenseLinearSolver
 
         var factors = Factor(matrix, cancellationToken, progress, progressStart, progressEnd);
         var solution = factors.Solve(rhs);
-        // Substitution-only corrections. The open LED string in REF-1 scenario B
-        // needs a few of them; they reuse this factorization instead of refactoring.
-        for (var pass = 0; pass < 6; pass++)
+        var scale = Math.Max(1, MaxAbs(rhs));
+        // Stop when the residual is already at the tolerance. The pass cap only bounds a
+        // matrix whose residual stays large; ordinary circuit solves return on the first check.
+        for (var pass = 0; pass < 4; pass++)
         {
             var residual = MultiplyResidual(matrix, solution, rhs);
-            if (MaxAbs(residual) == 0)
+            if (MaxAbs(residual) <= 1e-12 * scale)
             {
                 break;
             }
 
+            Interlocked.Increment(ref _refinementCount);
             var correction = factors.Solve(residual);
             for (var i = 0; i < n; i++)
             {
@@ -55,11 +63,32 @@ public static class DenseLinearSolver
         double progressStart,
         double progressEnd)
     {
-        FactorizationCount++;
+        Interlocked.Increment(ref _factorizationCount);
         var n = matrix.GetLength(0);
         var a = (double[,])matrix.Clone();
-        var pivot = new int[n];
-        var threshold = Math.Max(MaxAbs(a), 1) * 1e-12;
+        var rowScale = new double[n];
+        for (var row = 0; row < n; row++)
+        {
+            var max = 0d;
+            for (var column = 0; column < n; column++)
+            {
+                max = Math.Max(max, Math.Abs(a[row, column]));
+            }
+
+            rowScale[row] = max > 0 ? max : 1;
+            for (var column = 0; column < n; column++)
+            {
+                a[row, column] /= rowScale[row];
+            }
+        }
+
+        var permutation = new int[n];
+        for (var row = 0; row < n; row++)
+        {
+            permutation[row] = row;
+        }
+
+        var threshold = 1e-15;
         var span = progressEnd - progressStart;
 
         for (var k = 0; k < n; k++)
@@ -82,7 +111,6 @@ public static class DenseLinearSolver
                 }
             }
 
-            pivot[k] = pivotRow;
             if (pivotMagnitude <= threshold)
             {
                 throw new SingularLinearSystemException();
@@ -91,6 +119,7 @@ public static class DenseLinearSolver
             if (pivotRow != k)
             {
                 SwapRows(a, k, pivotRow, n);
+                (permutation[k], permutation[pivotRow]) = (permutation[pivotRow], permutation[k]);
             }
 
             var diagonal = a[k, k];
@@ -105,7 +134,7 @@ public static class DenseLinearSolver
             }
         }
 
-        return new LuFactorization(a, pivot);
+        return new LuFactorization(a, permutation, rowScale);
     }
 
     private static double[] MultiplyResidual(double[,] matrix, double[] solution, double[] rhs)
@@ -161,20 +190,20 @@ public static class DenseLinearSolver
         return max;
     }
 
-    private sealed class LuFactorization(double[,] factors, int[] pivotRows)
+    private sealed class LuFactorization(double[,] factors, int[] permutation, double[] rowScale)
     {
         public double[] Solve(double[] rhs)
         {
             var n = rhs.Length;
-            var b = (double[])rhs.Clone();
+            var b = new double[n];
+            for (var i = 0; i < n; i++)
+            {
+                var original = permutation[i];
+                b[i] = rhs[original] / rowScale[original];
+            }
+
             for (var k = 0; k < n; k++)
             {
-                var pivot = pivotRows[k];
-                if (pivot != k)
-                {
-                    (b[k], b[pivot]) = (b[pivot], b[k]);
-                }
-
                 for (var i = k + 1; i < n; i++)
                 {
                     b[i] -= factors[i, k] * b[k];

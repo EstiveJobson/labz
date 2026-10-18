@@ -128,6 +128,73 @@ public class SolverEdgeTests
         open.Get("L1.I").Value.Should().BeApproximately(0, 1e-9);
     }
 
+    [Theory]
+    [InlineData(2, -0.1)]
+    [InlineData(2, -1)]
+    [InlineData(2, -5)]
+    [InlineData(2, -100)]
+    [InlineData(3, -0.1)]
+    [InlineData(3, -1)]
+    [InlineData(3, -5)]
+    [InlineData(3, -100)]
+    public void Series_diodes_reverse_biased_through_1k_converge(int count, double volts)
+    {
+        var solution = _solver.Solve(SeriesDiodes(count, volts, 1000));
+        solution.PowerBalanceOk.Should().BeTrue();
+        var resistorCurrent = solution.Get("R1.I").Value;
+        for (var index = 1; index <= count; index++)
+        {
+            solution.Get($"D{index}.I").Value.Should().BeApproximately(resistorCurrent, 1e-9);
+        }
+    }
+
+    [Theory]
+    [InlineData(0.3)]
+    [InlineData(0.7)]
+    public void Three_forward_diodes_at_low_voltage_converge(double volts)
+    {
+        var solution = _solver.Solve(SeriesDiodes(3, volts, 1000));
+        solution.PowerBalanceOk.Should().BeTrue();
+        solution.Get("D1.I").Value.Should().BeApproximately(solution.Get("R1.I").Value, 1e-9);
+    }
+
+    [Fact]
+    public void Diode_fed_by_1_gigaohm_at_5_volts_converges()
+    {
+        var solution = _solver.Solve(SeriesDiodes(1, 5, 1e9));
+        solution.PowerBalanceOk.Should().BeTrue();
+        solution.Get("D1.I").Value.Should().BePositive();
+        solution.Get("D1.I").Value.Should().BeApproximately(solution.Get("R1.I").Value, 1e-9);
+    }
+
+    [Fact]
+    public void Stiff_forward_diode_converges_with_junction_limiting()
+    {
+        var solution = _solver.Solve(SeriesDiodes(1, 10, 1));
+        solution.PowerBalanceOk.Should().BeTrue();
+        solution.Get("D1.I").Value.Should().BeGreaterThan(1);
+    }
+
+    [Fact]
+    public void Led_reverse_nanoamp_turns_off()
+    {
+        // 1.99 V through 1 MΩ against a 2 V LED is about -10 nA while the LED is forced on.
+        // That is below 1e-6 and above 1e-9, so the state tolerance must stay at 1e-9.
+        var circuit = new CircuitBuilder()
+            .Add(new DcVoltageSourceComponent("V1", 1.99))
+            .Add(new ResistorComponent("R1", 1_000_000))
+            .Add(new LedComponent("L1", 2))
+            .Add(new GroundComponent("GND"))
+            .Connect("N", ("V1", "+"), ("R1", "1"))
+            .Connect("A", ("R1", "2"), ("L1", "A"))
+            .Connect("0", ("V1", "-"), ("L1", "K"), ("GND", "g"))
+            .Build();
+
+        var solution = _solver.Solve(circuit);
+        solution.Get("L1.I").Value.Should().Be(0);
+        solution.PowerBalanceOk.Should().BeTrue();
+    }
+
     [Fact]
     public void Cir7_exactly_half_and_full_rating_are_warnings()
     {
@@ -148,6 +215,28 @@ public class SolverEdgeTests
             .Connect("0", ("V1", "-"), ("R1", "2"), ("GND", "g"))
             .Build();
         return _solver.Solve(circuit).PowerRatings.Single().Message;
+    }
+
+    private static CircuitModel SeriesDiodes(int count, double volts, double ohms)
+    {
+        var builder = new CircuitBuilder()
+            .Add(new DcVoltageSourceComponent("V1", volts))
+            .Add(new ResistorComponent("R1", ohms))
+            .Add(new GroundComponent("GND"));
+        for (var index = 1; index <= count; index++)
+        {
+            builder.Add(new DiodeComponent($"D{index}"));
+        }
+
+        builder.Connect("SRC", ("V1", "+"), ("R1", "1"));
+        builder.Connect("N1", ("R1", "2"), ("D1", "A"));
+        for (var index = 1; index < count; index++)
+        {
+            builder.Connect($"M{index}", ($"D{index}", "K"), ($"D{index + 1}", "A"));
+        }
+
+        builder.Connect("0", ("V1", "-"), ($"D{count}", "K"), ("GND", "g"));
+        return builder.Build();
     }
 
     private static CircuitModel Divider() => new CircuitBuilder()

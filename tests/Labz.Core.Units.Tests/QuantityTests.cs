@@ -70,7 +70,8 @@ public class QuantityTests
     {
         var current = Quantity.Of(0.02, KnownUnits.Ampere);
         QuantityFormatter.Format(current, 2).Should().Be("20 mA");
-        QuantityFormatter.Format(current, 4).Should().Be("20,00 mA");
+        QuantityFormatter.Format(Quantity.Of(1500, KnownUnits.Ohm)).Should().Be("1,5 kΩ");
+        QuantityFormatter.Format(Quantity.Of(4700, KnownUnits.Ohm)).Should().Be("4,7 kΩ");
     }
 
     [Theory]

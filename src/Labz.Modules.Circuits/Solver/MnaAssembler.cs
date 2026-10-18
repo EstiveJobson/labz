@@ -30,6 +30,9 @@ internal sealed class SolvedCircuit
 /// </summary>
 internal static class MnaAssembler
 {
+    /// <summary>Conductance in parallel with every Shockley junction, in siemens.</summary>
+    public const double ParallelConductance = 1e-12;
+
     private const int NewtonLimit = 80;
 
     public static SolvedCircuit Solve(
@@ -43,31 +46,105 @@ internal static class MnaAssembler
         var diodes = topology.Circuit.Components.OfType<DiodeComponent>().ToArray();
         if (diodes.Length == 0)
         {
-            return SolveLinear(topology, ledsOn, linearization: null, cancellationToken, progress, progressStart, progressEnd);
+            return SolveLinear(
+                topology,
+                ledsOn,
+                linearization: null,
+                gmin: 0,
+                cancellationToken,
+                progress,
+                progressStart,
+                progressEnd);
         }
 
+        // Start at 0 V so a stiff forward diode has to be limited by pnjlim, and walk gmin
+        // down so series reverse junctions are not opened against a 1 mA forward guess.
         var linearization = new double[diodes.Length];
-        for (var i = 0; i < diodes.Length; i++)
+        var gmin = 1e-3;
+        while (true)
         {
-            var model = diodes[i].Model;
-            var nVt = model.EmissionCoefficient * DiodePhysics.ThermalVoltage;
-            linearization[i] = nVt * Math.Log((1e-3 / model.SaturationCurrent) + 1);
-        }
+            cancellationToken.ThrowIfCancellationRequested();
+            var attempt = (double[])linearization.Clone();
+            if (!TryNewton(
+                    topology,
+                    ledsOn,
+                    diodes,
+                    attempt,
+                    gmin,
+                    cancellationToken,
+                    progress,
+                    progressStart,
+                    progressEnd,
+                    out var candidate))
+            {
+                if (gmin <= ParallelConductance * 1.01)
+                {
+                    throw new DcSolverConvergenceException(
+                        Strings.NoConvergence(Join(topology.Circuit.Components.Select(component => component.Id))),
+                        topology.Circuit.Components.Select(component => component.Id).ToArray());
+                }
 
-        SolvedCircuit? solved = null;
+                gmin = Math.Max(ParallelConductance, gmin / 2);
+                continue;
+            }
+
+            linearization = attempt;
+            if (gmin <= ParallelConductance * 1.01)
+            {
+                return candidate;
+            }
+
+            gmin = Math.Max(ParallelConductance, gmin / 10);
+        }
+    }
+
+    private static bool TryNewton(
+        Topology topology,
+        IReadOnlySet<string> ledsOn,
+        DiodeComponent[] diodes,
+        double[] linearization,
+        double gmin,
+        CancellationToken cancellationToken,
+        IProgress<double>? progress,
+        double progressStart,
+        double progressEnd,
+        out SolvedCircuit solved)
+    {
+        solved = null!;
         var span = progressEnd - progressStart;
         for (var iteration = 0; iteration < NewtonLimit; iteration++)
         {
             cancellationToken.ThrowIfCancellationRequested();
             var stepStart = progressStart + (span * iteration / NewtonLimit);
             var stepEnd = progressStart + (span * (iteration + 1) / NewtonLimit);
-            solved = SolveLinear(topology, ledsOn, linearization, cancellationToken, progress, stepStart, stepEnd);
+            try
+            {
+                solved = SolveLinear(
+                    topology,
+                    ledsOn,
+                    linearization,
+                    gmin,
+                    cancellationToken,
+                    progress,
+                    stepStart,
+                    stepEnd);
+            }
+            catch (SingularCircuitException)
+            {
+                return false;
+            }
+
             var converged = true;
             for (var i = 0; i < diodes.Length; i++)
             {
                 var proposed = JunctionVoltage(topology, solved, diodes[i]);
                 var nVt = diodes[i].Model.EmissionCoefficient * DiodePhysics.ThermalVoltage;
-                if (Math.Abs(proposed - linearization[i]) > 1e-12)
+                var step = Math.Abs(proposed - linearization[i]);
+                EvaluateShockley(diodes[i].Model, linearization[i], out _, out var conductance);
+                // Series reverse diodes split the voltage on a gmin-scale Jacobian, so the node
+                // between them chatters by a few microvolts. That step changes the current by
+                // far less than a nanoamp. A stiff forward junction still has to land within 1e-8 V.
+                if (step > 1e-8 && step * (conductance + gmin) > 1e-9)
                 {
                     converged = false;
                 }
@@ -81,13 +158,11 @@ internal static class MnaAssembler
 
             if (converged)
             {
-                return solved;
+                return true;
             }
         }
 
-        throw new DcSolverConvergenceException(
-            Strings.NoConvergence(Join(topology.Circuit.Components.Select(component => component.Id))),
-            topology.Circuit.Components.Select(component => component.Id).ToArray());
+        return false;
     }
 
     public static double JunctionVoltage(Topology topology, SolvedCircuit solved, DiodeComponent diode)
@@ -102,13 +177,14 @@ internal static class MnaAssembler
     public static double ShockleyCurrent(DiodeModel model, double junctionVoltage)
     {
         EvaluateShockley(model, junctionVoltage, out var current, out _);
-        return current;
+        return current + (ParallelConductance * junctionVoltage);
     }
 
     private static SolvedCircuit SolveLinear(
         Topology topology,
         IReadOnlySet<string> ledsOn,
         double[]? linearization,
+        double gmin,
         CancellationToken cancellationToken,
         IProgress<double>? progress,
         double progressStart,
@@ -131,7 +207,7 @@ internal static class MnaAssembler
                         1 / resistor.ResistanceOhms);
                     break;
                 case DiodeComponent diode:
-                    StampDiode(topology, system, diode, diodes, linearization);
+                    StampDiode(topology, system, diode, diodes, linearization, gmin);
                     break;
                 case DcVoltageSourceComponent source:
                     currents[source.Id] = system.StampVoltageSource(
@@ -213,7 +289,8 @@ internal static class MnaAssembler
         MnaSystem system,
         DiodeComponent diode,
         DiodeComponent[] diodes,
-        double[]? linearization)
+        double[]? linearization,
+        double gmin)
     {
         var index = Array.IndexOf(diodes, diode);
         var vd = linearization is null ? 0 : linearization[index];
@@ -230,7 +307,7 @@ internal static class MnaAssembler
 
         EvaluateShockley(diode.Model, vd, out var current, out var conductance);
         var equivalent = current - (conductance * vd);
-        system.StampCompanion(junction, cathode, conductance, equivalent);
+        system.StampCompanion(junction, cathode, conductance + gmin, equivalent);
     }
 
     private static void EvaluateShockley(DiodeModel model, double junctionVoltage, out double current, out double conductance)

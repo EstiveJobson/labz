@@ -24,6 +24,14 @@ internal static class Strings
     public static string AmbiguousSeparator(string text) =>
         Format("AmbiguousSeparator", text);
 
+    public static string PrefixedHour() => Format("PrefixedHour");
+
+    public static string DivideByZero() => Format("DivideByZero");
+
+    public static string SignificantDigits() => Format("SignificantDigits");
+
+    public static string NoNamedUnit() => Format("NoNamedUnit");
+
     public static string Dimensionless() => Format("Dimensionless");
 
     public static string NotANumber() => Format("NotANumber");

@@ -49,7 +49,7 @@ public readonly record struct Quantity
     {
         if (right.Value == 0)
         {
-            throw new DivideByZeroException("Cannot divide a quantity by zero.");
+            throw new DivideByZeroException(Strings.DivideByZero());
         }
 
         return new Quantity(left.Value / right.Value, left.Dimension / right.Dimension);
@@ -63,7 +63,7 @@ public readonly record struct Quantity
     {
         if (scale == 0)
         {
-            throw new DivideByZeroException("Cannot divide a quantity by zero.");
+            throw new DivideByZeroException(Strings.DivideByZero());
         }
 
         return new Quantity(quantity.Value / scale, quantity.Dimension);
