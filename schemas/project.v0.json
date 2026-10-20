@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://labz.dev/schemas/project.v0.json",
+  "title": "project.v0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "id", "name", "createdAt", "idea", "modules", "history"],
+  "properties": {
+    "schemaVersion": { "const": "0.1" },
+    "id": { "type": "string", "minLength": 1 },
+    "name": { "type": "string", "minLength": 1 },
+    "createdAt": { "type": "string", "minLength": 1 },
+    "idea": { "type": "string" },
+    "modules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["circuits"],
+      "properties": {
+        "circuits": { "$ref": "#/$defs/circuits" }
+      }
+    },
+    "history": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/historyEntry" }
+    }
+  },
+  "$defs": {
+    "circuits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["components", "nets", "usageProfiles", "analyses"],
+      "properties": {
+        "components": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/component" }
+        },
+        "nets": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/net" }
+        },
+        "usageProfiles": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/usageProfile" }
+        },
+        "analyses": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/analysis" }
+        }
+      }
+    },
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "params", "pins", "layout"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "type": {
+          "enum": [
+            "resistor",
+            "capacitor",
+            "inductor",
+            "diode",
+            "led",
+            "dc_voltage_source",
+            "solar_panel",
+            "battery",
+            "switch",
+            "ground"
+          ]
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "pins": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "layout": { "$ref": "#/$defs/layout" }
+      }
+    },
+    "layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "rotation"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "rotation": { "type": "number" }
+      }
+    },
+    "net": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "connections"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "connections": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              { "type": "string", "minLength": 1 },
+              { "type": "string", "minLength": 1 }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          }
+        }
+      }
+    },
+    "usageProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target", "hoursPerDay"],
+      "properties": {
+        "target": { "type": "string", "minLength": 1 },
+        "hoursPerDay": { "type": "number", "minimum": 0 }
+      }
+    },
+    "analysis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "enum": ["op", "dc", "ac", "tran"] },
+        "step": { "type": "string", "minLength": 1 },
+        "stop": { "type": "string", "minLength": 1 }
+      }
+    },
+    "historyEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["at", "source", "change"],
+      "properties": {
+        "at": { "type": "string", "minLength": 1 },
+        "source": { "enum": ["user", "grok"] },
+        "change": { "type": "string" }
+      }
+    }
+  }
+}

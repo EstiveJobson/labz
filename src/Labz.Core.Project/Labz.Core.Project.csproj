@@ -6,6 +6,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Labz.Core.Units\Labz.Core.Units.csproj" />
+    <PackageReference Include="JsonSchema.Net" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\schemas\project.v0.json">
+      <LogicalName>Labz.Core.Project.project.v0.json</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 
 </Project>
