@@ -221,21 +221,20 @@ public class QaFixTests
         session.ConnectPins(resistor, "2", ground, "g");
         session.ConnectPins(source, "-", ground, "g");
         var missing = new LiveSolveController(
-            debounce: TimeSpan.FromMilliseconds(10),
             solve: (_, _, _, _) => throw new MissingGroundException("falta terra", ["R1"]));
-        missing.Schedule(session.State);
-        Wait(() => missing.BlockedMessage is not null);
+        missing.SolveNow(session.State);
         missing.IsRunning.Should().BeFalse();
+        missing.ShowProgress.Should().BeFalse();
+        missing.BlockedMessage.Should().NotBeNull();
         missing.Problems.Should().ContainSingle(problem =>
             problem.Kind == CircuitProblemKind.MissingGround && problem.ComponentIds.Contains("R1"));
 
         var boom = new LiveSolveController(
-            debounce: TimeSpan.FromMilliseconds(10),
             solve: (_, _, _, _) => throw new InvalidOperationException("falhou"));
-        boom.Schedule(session.State);
-        Wait(() => boom.BlockedMessage is not null);
+        boom.SolveNow(session.State);
         boom.IsRunning.Should().BeFalse();
         boom.ShowProgress.Should().BeFalse();
+        boom.BlockedMessage.Should().NotBeNull();
         boom.Problems.Should().Contain(problem => problem.Kind == CircuitProblemKind.CalculationFailed);
     }
 
@@ -350,19 +349,5 @@ public class QaFixTests
         }
 
         throw new InvalidOperationException("Could not find the repository root.");
-    }
-
-    private static void Wait(Func<bool> condition)
-    {
-        var start = DateTime.UtcNow;
-        while (!condition())
-        {
-            if (DateTime.UtcNow - start > TimeSpan.FromSeconds(2))
-            {
-                throw new TimeoutException("Condition was not reached.");
-            }
-
-            Thread.Sleep(15);
-        }
     }
 }

@@ -67,19 +67,33 @@ public sealed class LiveSolveController : IDisposable
             try
             {
                 await Task.Delay(_debounce, cts.Token).ConfigureAwait(false);
+                if (generation != Volatile.Read(ref _generation))
+                {
+                    return;
+                }
+
+                await SolveAsync(snapshot, generation, cts).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
-                return;
+                ClearRunning(generation);
             }
-
-            if (generation != Volatile.Read(ref _generation))
+            catch (Exception exception)
             {
-                return;
+                PublishBlocked(generation, [ProblemFor(exception)]);
             }
-
-            await SolveAsync(snapshot, generation, cts).ConfigureAwait(false);
         });
+    }
+
+    /// <summary>
+    /// Runs one solve on the caller. Tests use it to map solver exceptions without the debounce queue.
+    /// </summary>
+    internal void SolveNow(SchematicState state)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        var generation = Interlocked.Increment(ref _generation);
+        using var cts = new CancellationTokenSource();
+        SolveAsync(state.Capture(), generation, cts).GetAwaiter().GetResult();
     }
 
     public void Cancel() => _run?.Cancel();
@@ -186,6 +200,20 @@ public sealed class LiveSolveController : IDisposable
         CircuitSolverException solver => new(CircuitProblemKind.CalculationFailed, solver.Message, solver.ComponentIds),
         _ => new(CircuitProblemKind.CalculationFailed, exception.Message, []),
     };
+
+    private void ClearRunning(int generation)
+    {
+        if (generation != Volatile.Read(ref _generation))
+        {
+            return;
+        }
+
+        Post(() =>
+        {
+            Volatile.Write(ref _isRunning, 0);
+            Volatile.Write(ref _showProgress, 0);
+        });
+    }
 
     private void PublishBlocked(int generation, IReadOnlyList<CircuitProblem> problems)
     {
