@@ -34,9 +34,13 @@ public sealed class LiveSolveController : IDisposable
         _solve = solve ?? ((circuit, energy, token, progress) => new DcSolver().Solve(circuit, energy, token, progress));
     }
 
-    public bool IsRunning { get; private set; }
+    private int _isRunning;
 
-    public bool ShowProgress { get; private set; }
+    private int _showProgress;
+
+    public bool IsRunning => Volatile.Read(ref _isRunning) != 0;
+
+    public bool ShowProgress => Volatile.Read(ref _showProgress) != 0;
 
     public double Progress { get; private set; }
 
@@ -86,27 +90,22 @@ public sealed class LiveSolveController : IDisposable
     {
         Post(() =>
         {
-            IsRunning = true;
-            ShowProgress = false;
+            Volatile.Write(ref _isRunning, 1);
+            Volatile.Write(ref _showProgress, 0);
             Progress = 0;
         });
 
-        var progressDelay = Task.Run(async () =>
-        {
-            try
+        using var progressTimer = new Timer(
+            _ =>
             {
-                await Task.Delay(_progressAfter, cts.Token).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException)
-            {
-                return;
-            }
-
-            if (generation == Volatile.Read(ref _generation))
-            {
-                Post(() => ShowProgress = IsRunning);
-            }
-        });
+                if (generation == Volatile.Read(ref _generation) && Volatile.Read(ref _isRunning) != 0)
+                {
+                    Post(() => Volatile.Write(ref _showProgress, 1));
+                }
+            },
+            null,
+            _progressAfter,
+            Timeout.InfiniteTimeSpan);
 
         try
         {
@@ -150,8 +149,8 @@ public sealed class LiveSolveController : IDisposable
                 Solution = solution;
                 Problems = [];
                 BlockedMessage = null;
-                IsRunning = false;
-                ShowProgress = false;
+                Volatile.Write(ref _isRunning, 0);
+                Volatile.Write(ref _showProgress, 0);
                 Progress = 1;
             });
         }
@@ -161,18 +160,14 @@ public sealed class LiveSolveController : IDisposable
             {
                 Post(() =>
                 {
-                    IsRunning = false;
-                    ShowProgress = false;
+                    Volatile.Write(ref _isRunning, 0);
+                    Volatile.Write(ref _showProgress, 0);
                 });
             }
         }
         catch (CircuitSolverException exception)
         {
             PublishBlocked(generation, [new CircuitProblem(CircuitProblemKind.VoltageSourceShort, exception.Message, exception.ComponentIds)]);
-        }
-        finally
-        {
-            progressDelay.ContinueWith(_ => { }, TaskScheduler.Default);
         }
 
         return Task.CompletedTask;
@@ -190,8 +185,8 @@ public sealed class LiveSolveController : IDisposable
             Problems = problems;
             Solution = null;
             BlockedMessage = Strings.FixSchematic;
-            IsRunning = false;
-            ShowProgress = false;
+            Volatile.Write(ref _isRunning, 0);
+            Volatile.Write(ref _showProgress, 0);
         });
     }
 

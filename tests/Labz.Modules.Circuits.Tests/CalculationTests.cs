@@ -180,10 +180,10 @@ public class CalculationTests
             progressAfter: TimeSpan.FromMilliseconds(30),
             solve: (_, _, token, progress) =>
             {
-                progress?.Report(0.2);
                 started.Set();
                 while (!token.IsCancellationRequested)
                 {
+                    progress?.Report(0.2);
                     Thread.Sleep(10);
                 }
 
