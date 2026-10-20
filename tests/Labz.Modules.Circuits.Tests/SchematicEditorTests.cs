@@ -159,7 +159,8 @@ public class SchematicEditorTests
         session.ApplyDiodePreset(diode, schottky: true);
         var model = CircuitMapper.ToCircuit(session.State).Components.OfType<DiodeComponent>().Single().Model;
         model.SaturationCurrent.Should().Be(DiodePresets.Schottky.SaturationCurrent);
-        model.BreakdownVoltage.Should().Be(DiodePresets.Schottky.BreakdownVoltage);
+        model.EmissionCoefficient.Should().Be(DiodePresets.Schottky.EmissionCoefficient);
+        model.SeriesResistance.Should().Be(DiodePresets.Schottky.SeriesResistance);
     }
 
     [Fact]

@@ -80,7 +80,7 @@ public static class ParamEditor
             return value is >= 0 and <= 1;
         }
 
-        if (name is "resistance" or "powerRating" or "capacitance" or "inductance" or "IS" or "N" or "BV" or "forwardVoltage")
+        if (name is "resistance" or "powerRating" or "capacitance" or "inductance" or "IS" or "N" or "forwardVoltage")
         {
             return value > 0;
         }

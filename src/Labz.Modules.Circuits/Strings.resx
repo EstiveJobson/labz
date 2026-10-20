@@ -165,9 +165,6 @@
   <data name="ParamSeriesResistance" xml:space="preserve">
     <value>Resistência série</value>
   </data>
-  <data name="ParamBreakdown" xml:space="preserve">
-    <value>Tensão de ruptura</value>
-  </data>
   <data name="ParamForwardVoltage" xml:space="preserve">
     <value>Tensão direta</value>
   </data>

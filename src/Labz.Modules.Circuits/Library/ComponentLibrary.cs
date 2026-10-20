@@ -104,7 +104,6 @@ public static class ComponentLibrary
             ["IS"] = Amperes(model.SaturationCurrent),
             ["N"] = Plain(model.EmissionCoefficient),
             ["RS"] = Ohms(model.SeriesResistance),
-            ["BV"] = Volts(model.BreakdownVoltage),
         };
     }
 
@@ -166,7 +165,6 @@ public static class ComponentLibrary
             Quantity("IS", Strings.ParamSaturationCurrent, Dimension.Current, preset["IS"]),
             Quantity("N", Strings.ParamEmission, Dimension.None, preset["N"]),
             Quantity("RS", Strings.ParamSeriesResistance, Dimension.Resistance, preset["RS"]),
-            Quantity("BV", Strings.ParamBreakdown, Dimension.Voltage, preset["BV"]),
         ];
     }
 
@@ -215,8 +213,6 @@ public static class ComponentLibrary
     private static string Amperes(double value) => Plain(value) + " A";
 
     private static string Ohms(double value) => Plain(value) + " Ω";
-
-    private static string Volts(double value) => Plain(value) + " V";
 
     private static string Plain(double value) =>
         value.ToString("G17", CultureInfo.InvariantCulture).Replace('.', ',');

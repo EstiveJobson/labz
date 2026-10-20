@@ -114,8 +114,6 @@ internal static class Strings
 
     public static string ParamSeriesResistance => Get("ParamSeriesResistance");
 
-    public static string ParamBreakdown => Get("ParamBreakdown");
-
     public static string ParamEmission => Get("ParamEmission");
 
     public static string ParamForwardVoltage => Get("ParamForwardVoltage");

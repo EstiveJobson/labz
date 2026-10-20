@@ -52,8 +52,7 @@ public static class CircuitMapper
         "diode" => new DiodeComponent(component.Id, new DiodeModel(
             Required(component, "IS", KnownUnits.Ampere),
             Required(component, "N", KnownUnits.Dimensionless),
-            Required(component, "RS", KnownUnits.Ohm),
-            Required(component, "BV", KnownUnits.Volt))),
+            Required(component, "RS", KnownUnits.Ohm))),
         "led" => new LedComponent(
             component.Id,
             Required(component, "forwardVoltage", KnownUnits.Volt),
