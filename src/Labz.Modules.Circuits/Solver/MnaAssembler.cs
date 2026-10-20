@@ -33,16 +33,17 @@ internal static class MnaAssembler
     /// <summary>Conductance in parallel with every Shockley junction, in siemens.</summary>
     public const double ParallelConductance = 1e-12;
 
-    /// <summary>
-    /// Newton compares the Shockley current at the new voltage with the linearized stamp.
-    /// 1e-6 relative, plus 1 fA, is enough to reject a slope-only step into the exponential.
-    /// A 1e-9 relative match spent most of the 80 iterations on the clamped 1e-20 A diode
-    /// for a residual already lost in roundoff. High-power junctions also have to keep
-    /// V·ΔI inside the balance band, which is tighter than 1e-6 when the current is amperes.
-    /// </summary>
+    /// <summary>Relative part of <see cref="NewtonCurrentTolerance"/>.</summary>
     private const double RelativeCurrentTolerance = 1e-6;
 
+    /// <summary>Absolute floor of <see cref="NewtonCurrentTolerance"/>, in amperes (1 fA).</summary>
     private const double AbsoluteCurrentTolerance = 1e-15;
+
+    /// <summary>Share of the CIR-11 balance band allowed as V·ΔI on one junction.</summary>
+    private const double PowerCapFraction = 0.2;
+
+    /// <summary>Denominator floor for the power cap, in volts.</summary>
+    private const double PowerCapVoltageFloor = 1e-3;
 
     private const int NewtonLimit = 80;
 
@@ -91,6 +92,15 @@ internal static class MnaAssembler
         return candidate;
     }
 
+    /// <summary>
+    /// Newton accepts a step when the Shockley current at the solved voltage matches the
+    /// linearized stamp, within <see cref="NewtonCurrentTolerance"/>.
+    /// The band is the tighter of a 1e-6 relative match (plus a 1 fA floor) and a power cap.
+    /// The relative term uses max(|I|, |Istamp|, Is). The power cap is 0.2 times the CIR-11
+    /// balance band divided by max(|Vj|, 1 mV), so V·ΔI stays inside that band.
+    /// At microamp junctions the 1e-6 term decides. At ampere junctions the power cap is tighter.
+    /// A 1e-9 relative band used up the iteration limit on a residual already lost in roundoff.
+    /// </summary>
     private static bool TryNewton(
         Topology topology,
         IReadOnlySet<string> ledsOn,
@@ -140,18 +150,11 @@ internal static class MnaAssembler
                 var predicted = currentAtOld + (conductance * (proposed - oldVoltage)) + (gmin * proposed);
                 var actual = currentAtNew + (gmin * proposed);
                 var mismatch = Math.Abs(actual - predicted);
-                var scale = Math.Max(Math.Abs(actual), Math.Abs(predicted));
-                scale = Math.Max(scale, diodes[i].Model.SaturationCurrent);
-                // 1e-6 relative plus 1 fA. High current also has to keep V·ΔI inside the balance band,
-                // which is tighter than 1e-6 once the junction is carrying amperes.
-                var tolerance = (RelativeCurrentTolerance * scale) + AbsoluteCurrentTolerance;
-                var balanceBand = DcSolver.PowerBalanceLimit(Math.Abs(proposed * actual), Math.Abs(proposed));
-                var powerCap = (0.2 * balanceBand) / Math.Max(Math.Abs(proposed), 1e-3);
-                if (powerCap > AbsoluteCurrentTolerance)
-                {
-                    tolerance = Math.Min(tolerance, powerCap);
-                }
-
+                var tolerance = NewtonCurrentTolerance(
+                    actual,
+                    predicted,
+                    diodes[i].Model.SaturationCurrent,
+                    proposed);
                 if (mismatch > tolerance)
                 {
                     converged = false;
@@ -171,6 +174,29 @@ internal static class MnaAssembler
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Current mismatch allowed by <see cref="TryNewton"/>, in amperes.
+    /// See that method for which term decides.
+    /// </summary>
+    internal static double NewtonCurrentTolerance(
+        double actual,
+        double predicted,
+        double saturationCurrent,
+        double junctionVoltage)
+    {
+        var scale = Math.Max(Math.Abs(actual), Math.Abs(predicted));
+        scale = Math.Max(scale, saturationCurrent);
+        var tolerance = (RelativeCurrentTolerance * scale) + AbsoluteCurrentTolerance;
+        var balanceBand = DcSolver.PowerBalanceLimit(Math.Abs(junctionVoltage * actual), Math.Abs(junctionVoltage));
+        var powerCap = (PowerCapFraction * balanceBand) / Math.Max(Math.Abs(junctionVoltage), PowerCapVoltageFloor);
+        if (powerCap > AbsoluteCurrentTolerance)
+        {
+            tolerance = Math.Min(tolerance, powerCap);
+        }
+
+        return tolerance;
     }
 
     public static double JunctionVoltage(Topology topology, SolvedCircuit solved, DiodeComponent diode)
@@ -322,9 +348,12 @@ internal static class MnaAssembler
     {
         var nVt = model.EmissionCoefficient * DiodePhysics.ThermalVoltage;
         var argument = junctionVoltage / nVt;
-        if (argument > 40)
+        // A fixed stop at 40 sits below vcrit when Is is about 1e-20 A, so the slope
+        // freezes and Newton never reaches the knee. Stay above vcrit and below exp overflow.
+        var forwardLimit = ForwardShockleyArgumentLimit(nVt, model.SaturationCurrent);
+        if (argument > forwardLimit)
         {
-            argument = 40;
+            argument = forwardLimit;
         }
         else if (argument < -40)
         {
@@ -334,6 +363,23 @@ internal static class MnaAssembler
         var exponential = Math.Exp(argument);
         current = model.SaturationCurrent * (exponential - 1);
         conductance = Math.Max(0, model.SaturationCurrent * exponential / nVt);
+    }
+
+    /// <summary>
+    /// Highest Shockley argument that is still evaluated. 40 is enough for ordinary
+    /// saturation currents. For Is near 1e-20 A, vcrit is past 40, so the limit moves
+    /// up with vcrit. 700 keeps <c>Math.Exp</c> finite.
+    /// </summary>
+    private static double ForwardShockleyArgumentLimit(double nVt, double saturationCurrent)
+    {
+        if (nVt <= 0 || saturationCurrent <= 0 || !double.IsFinite(nVt) || !double.IsFinite(saturationCurrent))
+        {
+            return 40;
+        }
+
+        var vcritArgument = Math.Log(nVt / (Math.Sqrt(2) * saturationCurrent));
+        var limit = Math.Max(40, vcritArgument + 40);
+        return Math.Min(limit, 700);
     }
 
     /// <summary>
