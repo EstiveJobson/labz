@@ -129,12 +129,23 @@ public sealed class LiveSolveController : IDisposable
                 return Task.CompletedTask;
             }
 
+            var startedAt = Environment.TickCount64;
             var progress = new Progress<double>(value =>
             {
-                if (generation == Volatile.Read(ref _generation))
+                if (generation != Volatile.Read(ref _generation))
                 {
-                    Post(() => Progress = value);
+                    return;
                 }
+
+                var show = Environment.TickCount64 - startedAt >= _progressAfter.TotalMilliseconds;
+                Post(() =>
+                {
+                    Progress = value;
+                    if (show && Volatile.Read(ref _isRunning) != 0)
+                    {
+                        Volatile.Write(ref _showProgress, 1);
+                    }
+                });
             });
             var solverThreadId = Environment.CurrentManagedThreadId;
             var solution = _solve(circuit, CircuitMapper.ToEnergy(state), cts.Token, progress);

@@ -192,7 +192,18 @@ public class CalculationTests
             });
         slow.Schedule(session.State);
         started.Wait(TimeSpan.FromSeconds(2)).Should().BeTrue();
-        Wait(() => slow.ShowProgress);
+        var progressDeadline = DateTime.UtcNow.AddSeconds(3);
+        while (!slow.ShowProgress && DateTime.UtcNow < progressDeadline)
+        {
+            Thread.Sleep(15);
+        }
+
+        slow.ShowProgress.Should().BeTrue(
+            "running {0}, progress {1}, blocked {2}, problems {3}",
+            slow.IsRunning,
+            slow.Progress,
+            slow.BlockedMessage,
+            slow.Problems.Count);
         var cancel = Stopwatch.StartNew();
         slow.Cancel();
         Wait(() => !slow.IsRunning);
