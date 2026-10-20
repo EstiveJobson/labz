@@ -207,4 +207,34 @@
   <data name="ParamRoff" xml:space="preserve">
     <value>Resistência aberta</value>
   </data>
+  <data name="FixSchematic" xml:space="preserve">
+    <value>Corrija os problemas do esquema para calcular.</value>
+  </data>
+  <data name="BalanceOk" xml:space="preserve">
+    <value>balanço de potência ✓</value>
+  </data>
+  <data name="BalanceBad" xml:space="preserve">
+    <value>Balanço de potência fora da tolerância.</value>
+  </data>
+  <data name="SignConvention" xml:space="preserve">
+    <value>Sinal: positivo absorve potência.</value>
+  </data>
+  <data name="CardWhPerDay" xml:space="preserve">
+    <value>Wh/dia</value>
+  </data>
+  <data name="CardAutonomy" xml:space="preserve">
+    <value>Autonomia</value>
+  </data>
+  <data name="CardChargeCurrent" xml:space="preserve">
+    <value>Corrente de carga</value>
+  </data>
+  <data name="CardRecharge" xml:space="preserve">
+    <value>Tempo de recarga</value>
+  </data>
+  <data name="ChargeEfficiency" xml:space="preserve">
+    <value>Eficiência de carga: 1,0</value>
+  </data>
+  <data name="MissingValue" xml:space="preserve">
+    <value>—</value>
+  </data>
 </root>

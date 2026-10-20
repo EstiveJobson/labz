@@ -30,9 +30,10 @@ public sealed class SchematicViewModel : ObservableObject
     private double _panY = 40;
     private bool _showSchottky;
 
-    public SchematicViewModel(SchematicSession session)
+    public SchematicViewModel(SchematicSession session, ResultsViewModel? results = null)
     {
         Session = session;
+        Results = results;
         Library = new ObservableCollection<LibraryItemViewModel>(
             ComponentLibrary.All.Select(definition => new LibraryItemViewModel(definition.Type, definition.DisplayName)));
         Fields = [];
@@ -44,8 +45,18 @@ public sealed class SchematicViewModel : ObservableObject
         SchottkyCommand = new RelayCommand(() => ApplyPreset(true), () => _showSchottky);
         StandardDiodeCommand = new RelayCommand(() => ApplyPreset(false), () => _showSchottky);
         Session.Changed += _ => RefreshCommands();
+        SelectProblemCommand = new RelayCommand<CircuitProblem>(SelectProblem);
+        if (Results is not null)
+        {
+            Results.Updated += () => Highlight(Results.Problems.SelectMany(problem => problem.ComponentIds));
+        }
+
         RebuildScene();
     }
+
+    public ResultsViewModel? Results { get; }
+
+    public RelayCommand<CircuitProblem> SelectProblemCommand { get; }
 
     public SchematicSession Session { get; }
 
@@ -348,6 +359,15 @@ public sealed class SchematicViewModel : ObservableObject
         }
 
         RebuildScene();
+    }
+
+    public void SelectProblem(CircuitProblem? problem)
+    {
+        var id = problem?.ComponentIds.FirstOrDefault();
+        if (!string.IsNullOrEmpty(id))
+        {
+            Select(id);
+        }
     }
 
     public void Select(string id)

@@ -39,66 +39,66 @@ public static class CircuitMapper
     {
         "resistor" => new ResistorComponent(
             component.Id,
-            Required(component, "resistance", Dimension.Resistance),
-            Required(component, "powerRating", Dimension.Power)),
+            Required(component, "resistance", KnownUnits.Ohm),
+            Required(component, "powerRating", KnownUnits.Watt)),
         "capacitor" => new CapacitorComponent(
             component.Id,
-            Required(component, "capacitance", Dimension.Capacitance),
-            Optional(component, "initialVoltage", Dimension.Voltage)),
+            Required(component, "capacitance", KnownUnits.Farad),
+            Optional(component, "initialVoltage", KnownUnits.Volt)),
         "inductor" => new InductorComponent(
             component.Id,
-            Required(component, "inductance", Dimension.Inductance),
-            Optional(component, "initialCurrent", Dimension.Current)),
+            Required(component, "inductance", KnownUnits.Henry),
+            Optional(component, "initialCurrent", KnownUnits.Ampere)),
         "diode" => new DiodeComponent(component.Id, new DiodeModel(
-            Required(component, "IS", Dimension.Current),
-            Required(component, "N", Dimension.None),
-            Required(component, "RS", Dimension.Resistance),
-            Required(component, "BV", Dimension.Voltage))),
+            Required(component, "IS", KnownUnits.Ampere),
+            Required(component, "N", KnownUnits.Dimensionless),
+            Required(component, "RS", KnownUnits.Ohm),
+            Required(component, "BV", KnownUnits.Volt))),
         "led" => new LedComponent(
             component.Id,
-            Required(component, "forwardVoltage", Dimension.Voltage),
-            Optional(component, "forwardCurrent", Dimension.Current),
+            Required(component, "forwardVoltage", KnownUnits.Volt),
+            Optional(component, "forwardCurrent", KnownUnits.Ampere),
             component.Params.TryGetValue("color", out var color) ? color : null),
         "dc_voltage_source" => new DcVoltageSourceComponent(
             component.Id,
-            Required(component, "voltage", Dimension.Voltage)),
+            Required(component, "voltage", KnownUnits.Volt)),
         "solar_panel" => new SolarPanelComponent(
             component.Id,
-            Required(component, "openCircuitVoltage", Dimension.Voltage),
-            Required(component, "seriesResistance", Dimension.Resistance),
-            Optional(component, "ratedPower", Dimension.Power)),
+            Required(component, "openCircuitVoltage", KnownUnits.Volt),
+            Required(component, "seriesResistance", KnownUnits.Ohm),
+            Optional(component, "ratedPower", KnownUnits.Watt)),
         "battery" => new BatteryComponent(
             component.Id,
-            Required(component, "nominalVoltage", Dimension.Voltage),
-            Required(component, "internalResistance", Dimension.Resistance),
-            Required(component, "capacity", Dimension.Charge),
-            Required(component, "usableDepthOfDischarge", Dimension.None)),
+            Required(component, "nominalVoltage", KnownUnits.Volt),
+            Required(component, "internalResistance", KnownUnits.Ohm),
+            Required(component, "capacity", KnownUnits.AmpereHour),
+            Required(component, "usableDepthOfDischarge", KnownUnits.Dimensionless)),
         "switch" => new SwitchComponent(
             component.Id,
             component.Params.TryGetValue("state", out var state) && state == "closed" ? SwitchState.Closed : SwitchState.Open,
-            Optional(component, "Ron", Dimension.Resistance) ?? SwitchComponent.DefaultRonOhms,
-            Optional(component, "Roff", Dimension.Resistance) ?? SwitchComponent.DefaultRoffOhms),
+            Optional(component, "Ron", KnownUnits.Ohm) ?? SwitchComponent.DefaultRonOhms,
+            Optional(component, "Roff", KnownUnits.Ohm) ?? SwitchComponent.DefaultRoffOhms),
         "ground" => new GroundComponent(component.Id),
         _ => throw new ArgumentException(Strings.UnknownType(component.Type)),
     };
 
-    private static double Required(SchematicComponent component, string name, Dimension dimension)
+    private static double Required(SchematicComponent component, string name, Unit unit)
     {
         if (!component.Params.TryGetValue(name, out var text) || string.IsNullOrWhiteSpace(text))
         {
             throw new InvalidOperationException(Strings.RequiredParam(name));
         }
 
-        return QuantityParser.Parse(text, dimension).Value;
+        return QuantityParser.Parse(text, unit.Dimension).In(unit);
     }
 
-    private static double? Optional(SchematicComponent component, string name, Dimension dimension)
+    private static double? Optional(SchematicComponent component, string name, Unit unit)
     {
         if (!component.Params.TryGetValue(name, out var text) || string.IsNullOrWhiteSpace(text))
         {
             return null;
         }
 
-        return QuantityParser.Parse(text, dimension).Value;
+        return QuantityParser.Parse(text, unit.Dimension).In(unit);
     }
 }

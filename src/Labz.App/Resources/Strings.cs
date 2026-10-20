@@ -51,6 +51,34 @@ public static class Strings
 
     public static string NewProjectName => Get(nameof(NewProjectName));
 
+    public static string ColumnId => Get(nameof(ColumnId));
+
+    public static string ColumnType => Get(nameof(ColumnType));
+
+    public static string ColumnVoltage => Get(nameof(ColumnVoltage));
+
+    public static string ColumnCurrent => Get(nameof(ColumnCurrent));
+
+    public static string ColumnPower => Get(nameof(ColumnPower));
+
+    public static string ColumnRating => Get(nameof(ColumnRating));
+
+    public static string ValidationHeader => Get(nameof(ValidationHeader));
+
+    public static string Calculating => Get(nameof(Calculating));
+
+    public static string Cancel => Get(nameof(Cancel));
+
+    public static string LoadHours => Get(nameof(LoadHours));
+
+    public static string PeakSunHours => Get(nameof(PeakSunHours));
+
+    public static string HoursInvalid => Get(nameof(HoursInvalid));
+
+    public static string ChargeEfficiencyLabel => Get(nameof(ChargeEfficiencyLabel));
+
+    public static string FixSchematicMessage => Get(nameof(FixSchematicMessage));
+
     private static string Get(string name)
     {
         return ResourceManager.GetString(name, CultureInfo.CurrentUICulture)

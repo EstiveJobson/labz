@@ -11,21 +11,20 @@ public sealed class MainViewModel : ObservableObject
     private readonly SchematicViewModel _schematic;
     private readonly PlaceholderViewModel _home;
     private readonly PlaceholderViewModel _simulation;
-    private readonly PlaceholderViewModel _results;
     private readonly PlaceholderViewModel _settings;
     private object? _currentPage;
 
     public MainViewModel()
-        : this(SchematicSession.CreateBlank(Strings.NewProjectName, DateTimeOffset.Now))
+        : this(SchematicSession.CreateBlank(Strings.NewProjectName, DateTimeOffset.Now), new WpfMainThread())
     {
     }
 
-    public MainViewModel(SchematicSession session)
+    public MainViewModel(SchematicSession session, Labz.Modules.Circuits.IMainThread mainThread)
     {
-        _schematic = new SchematicViewModel(session);
+        Results = new ResultsViewModel(session, new LiveSolveController(mainThread));
+        _schematic = new SchematicViewModel(session, Results);
         _home = new PlaceholderViewModel(Strings.NavHome, Strings.UnderConstruction);
         _simulation = new PlaceholderViewModel(Strings.NavSimulation, Strings.UnderConstruction);
-        _results = new PlaceholderViewModel(Strings.NavResults, Strings.UnderConstruction);
         _settings = new PlaceholderViewModel(Strings.NavSettings, Strings.UnderConstruction);
         NavigationItems = new ObservableCollection<NavigationItem>
         {
@@ -46,6 +45,8 @@ public sealed class MainViewModel : ObservableObject
     public RelayCommand<NavigationItem> SelectSectionCommand { get; }
 
     public SchematicViewModel Schematic => _schematic;
+
+    public ResultsViewModel Results { get; }
 
     public object? CurrentPage
     {
@@ -70,7 +71,7 @@ public sealed class MainViewModel : ObservableObject
             _ when ReferenceEquals(item, NavigationItems[0]) => _home,
             _ when ReferenceEquals(item, NavigationItems[1]) => _schematic,
             _ when ReferenceEquals(item, NavigationItems[2]) => _simulation,
-            _ when ReferenceEquals(item, NavigationItems[3]) => _results,
+            _ when ReferenceEquals(item, NavigationItems[3]) => Results,
             _ => _settings,
         };
     }

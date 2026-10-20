@@ -11,5 +11,8 @@
         <DataTemplate DataType="{x:Type vm:SchematicViewModel}">
             <views:SchematicView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ResultsViewModel}">
+            <views:ResultsView />
+        </DataTemplate>
     </Application.Resources>
 </Application>

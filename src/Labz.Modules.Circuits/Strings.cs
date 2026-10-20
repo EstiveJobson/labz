@@ -144,6 +144,26 @@ internal static class Strings
 
     public static string ParamRoff => Get("ParamRoff");
 
+    public static string FixSchematic => Get("FixSchematic");
+
+    public static string BalanceOk => Get("BalanceOk");
+
+    public static string BalanceBad => Get("BalanceBad");
+
+    public static string SignConvention => Get("SignConvention");
+
+    public static string CardWhPerDay => Get("CardWhPerDay");
+
+    public static string CardAutonomy => Get("CardAutonomy");
+
+    public static string CardChargeCurrent => Get("CardChargeCurrent");
+
+    public static string CardRecharge => Get("CardRecharge");
+
+    public static string ChargeEfficiency => Get("ChargeEfficiency");
+
+    public static string MissingValue => Get("MissingValue");
+
     private static string Get(string name)
     {
         return ResourceManager.GetString(name, CultureInfo.InvariantCulture)

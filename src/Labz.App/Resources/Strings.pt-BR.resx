@@ -75,4 +75,46 @@
   <data name="NewProjectName" xml:space="preserve">
     <value>Sem título</value>
   </data>
+  <data name="ColumnId" xml:space="preserve">
+    <value>ID</value>
+  </data>
+  <data name="ColumnType" xml:space="preserve">
+    <value>Tipo</value>
+  </data>
+  <data name="ColumnVoltage" xml:space="preserve">
+    <value>Tensão</value>
+  </data>
+  <data name="ColumnCurrent" xml:space="preserve">
+    <value>Corrente</value>
+  </data>
+  <data name="ColumnPower" xml:space="preserve">
+    <value>Potência</value>
+  </data>
+  <data name="ColumnRating" xml:space="preserve">
+    <value>Potência nominal</value>
+  </data>
+  <data name="ValidationHeader" xml:space="preserve">
+    <value>Validação</value>
+  </data>
+  <data name="Calculating" xml:space="preserve">
+    <value>Calculando…</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="LoadHours" xml:space="preserve">
+    <value>Horas de uso por dia</value>
+  </data>
+  <data name="PeakSunHours" xml:space="preserve">
+    <value>Horas de sol pico</value>
+  </data>
+  <data name="HoursInvalid" xml:space="preserve">
+    <value>Informe um número de horas maior ou igual a zero.</value>
+  </data>
+  <data name="ChargeEfficiencyLabel" xml:space="preserve">
+    <value>Eficiência de carga: 1,0</value>
+  </data>
+  <data name="FixSchematicMessage" xml:space="preserve">
+    <value>Corrija os problemas do esquema para calcular.</value>
+  </data>
 </root>
