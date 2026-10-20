@@ -6,6 +6,9 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Labz.Modules.Circuits.Tests" />
+    <EmbeddedResource Include="..\..\samples\REF-1-solar-led\project.labz.json">
+      <LogicalName>Labz.Modules.Circuits.REF-1.project.labz.json</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>

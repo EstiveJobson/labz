@@ -26,6 +26,26 @@ public static class QuantityFormatter
         return FormatScaled(unit.FromSi(quantity.Value), unit.Symbol, significantDigits);
     }
 
+    /// <summary>
+    /// Formats <paramref name="quantity"/> in <paramref name="unit"/> instead of the canonical unit of the dimension.
+    /// Energy results are stored in hours, days, or Wh/day, and those symbols must stay on screen.
+    /// </summary>
+    public static string Format(Quantity quantity, Unit unit, int significantDigits = DefaultSignificantDigits)
+    {
+        ArgumentNullException.ThrowIfNull(unit);
+        if (significantDigits < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(significantDigits), Strings.SignificantDigits());
+        }
+
+        if (unit.Dimension != quantity.Dimension)
+        {
+            throw new DimensionMismatchException(quantity.Dimension, unit.Dimension);
+        }
+
+        return FormatScaled(unit.FromSi(quantity.Value), unit.Symbol, significantDigits);
+    }
+
     private static string FormatBare(double value, int significantDigits)
     {
         if (double.IsNaN(value))
@@ -77,9 +97,9 @@ public static class QuantityFormatter
         {
             engineering = 12;
         }
-        else if (engineering < -15)
+        else if (engineering < -12)
         {
-            engineering = -15;
+            engineering = -12;
         }
 
         double rounded = 0;
@@ -103,7 +123,7 @@ public static class QuantityFormatter
                 continue;
             }
 
-            if (rounded is > 0 and < 1 && engineering > -15)
+            if (rounded is > 0 and < 1 && engineering > -12)
             {
                 engineering -= 3;
                 continue;

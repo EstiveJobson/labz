@@ -27,7 +27,7 @@ public sealed record EnergySettings(double? LoadHoursPerDay = null, double? Peak
     {
         RequireNonNegative(LoadHoursPerDay, Strings.NonNegativeFinite(Strings.LoadHoursPerDay()));
         RequireNonNegative(PeakSunHours, Strings.NonNegativeFinite(Strings.PeakSunHours()));
-        ParameterValidation.RequirePositive(ChargeEfficiency, Strings.PositiveFinite(Strings.ChargeEfficiency()));
+        ParameterValidation.RequirePositive(ChargeEfficiency, Strings.PositiveFinite(Strings.ChargeEfficiencyName()));
     }
 
     private static void RequireNonNegative(double? value, string message)

@@ -1,0 +1,130 @@
+<UserControl x:Class="Labz.App.Views.ResultsView"
+             x:Name="resultsRoot"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <DockPanel Margin="16">
+        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="{Binding BalanceText}" FontSize="18" FontWeight="SemiBold" Margin="0,0,16,0">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="#B42318" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding PowerBalanceOk}" Value="True">
+                                    <Setter Property="Foreground" Value="#0E7C3A" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <TextBlock Text="{Binding SignConvention}" VerticalAlignment="Center" Foreground="#52606D" />
+                <TextBlock Text="{Binding ChargeEfficiency}" VerticalAlignment="Center" Margin="16,0,0,0" />
+            </StackPanel>
+            <DockPanel Margin="0,8,0,0">
+                <Button DockPanel.Dock="Right" Content="{Binding CancelLabel}" Command="{Binding CancelCommand}" Padding="8,4" Margin="8,0,0,0" />
+                <ProgressBar Height="8" Minimum="0" Maximum="1" Value="{Binding Progress}">
+                    <ProgressBar.Style>
+                        <Style TargetType="ProgressBar">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ShowProgress}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ProgressBar.Style>
+                </ProgressBar>
+            </DockPanel>
+            <TextBlock Text="{Binding BlockedMessage}" Foreground="#B42318" Margin="0,8,0,0" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding HoursError}" Foreground="#B42318" Margin="0,4,0,0" />
+        </StackPanel>
+
+        <UniformGrid DockPanel.Dock="Top" Columns="3" Margin="0,0,0,12">
+            <Border BorderBrush="#E4E7EB" BorderThickness="1" Margin="0,0,8,0" Padding="12" Background="White">
+                <StackPanel>
+                    <TextBlock Text="{Binding Cards[0].Title}" Foreground="#52606D" />
+                    <TextBlock Text="{Binding Cards[0].Text}" FontSize="20" FontWeight="SemiBold" Margin="0,4,0,0" ToolTip="{Binding Cards[0].Trace}" />
+                    <TextBlock Text="{Binding LoadHoursLabel}" Margin="0,8,0,0" />
+                    <TextBox Text="{Binding LoadHours, UpdateSourceTrigger=LostFocus}" Margin="0,4,0,0" />
+                </StackPanel>
+            </Border>
+            <Border BorderBrush="#E4E7EB" BorderThickness="1" Margin="0,0,8,0" Padding="12" Background="White">
+                <StackPanel>
+                    <TextBlock Text="{Binding Cards[1].Title}" Foreground="#52606D" />
+                    <TextBlock Text="{Binding Cards[1].Text}" FontSize="20" FontWeight="SemiBold" Margin="0,4,0,0" ToolTip="{Binding Cards[1].Trace}" />
+                    <TextBlock Text="{Binding PeakSunHoursLabel}" Margin="0,8,0,0" />
+                    <TextBox Text="{Binding PeakSunHours, UpdateSourceTrigger=LostFocus}" IsEnabled="{Binding CanEditPeakSun}" Margin="0,4,0,0" />
+                </StackPanel>
+            </Border>
+            <Border BorderBrush="#E4E7EB" BorderThickness="1" Margin="0,0,8,0" Padding="12" Background="White">
+                <StackPanel>
+                    <TextBlock Text="{Binding Cards[2].Title}" Foreground="#52606D" />
+                    <TextBlock Text="{Binding Cards[2].Text}" FontSize="20" FontWeight="SemiBold" Margin="0,4,0,0" ToolTip="{Binding Cards[2].Trace}" />
+                </StackPanel>
+            </Border>
+            <Border BorderBrush="#E4E7EB" BorderThickness="1" Padding="12" Background="White">
+                <StackPanel>
+                    <TextBlock Text="{Binding Cards[3].Title}" Foreground="#52606D" />
+                    <TextBlock Text="{Binding Cards[3].Text}" FontSize="20" FontWeight="SemiBold" Margin="0,4,0,0" ToolTip="{Binding Cards[3].Trace}" />
+                </StackPanel>
+            </Border>
+            <Border BorderBrush="#E4E7EB" BorderThickness="1" Margin="8,8,0,0" Padding="12" Background="White">
+                <StackPanel>
+                    <TextBlock Text="{Binding Cards[4].Title}" Foreground="#52606D" />
+                    <TextBlock Text="{Binding Cards[4].Text}" FontSize="20" FontWeight="SemiBold" Margin="0,4,0,0" ToolTip="{Binding Cards[4].Trace}" />
+                </StackPanel>
+            </Border>
+        </UniformGrid>
+
+        <DataGrid ItemsSource="{Binding Rows}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" CanUserAddRows="False">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="{Binding ColumnId, Source={x:Reference resultsRoot}}" Binding="{Binding Id}" />
+                <DataGridTextColumn Header="{Binding ColumnType, Source={x:Reference resultsRoot}}" Binding="{Binding TypeName}" />
+                <DataGridTemplateColumn Header="{Binding ColumnVoltage, Source={x:Reference resultsRoot}}">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Voltage}" ToolTip="{Binding VoltageTrace}" Margin="4,2" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="{Binding ColumnCurrent, Source={x:Reference resultsRoot}}">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Current}" ToolTip="{Binding CurrentTrace}" Margin="4,2" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="{Binding ColumnPower, Source={x:Reference resultsRoot}}">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Power}" ToolTip="{Binding PowerTrace}" Margin="4,2" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="{Binding ColumnRating, Source={x:Reference resultsRoot}}">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding RatingText}" ToolTip="{Binding RatingTrace}" Margin="4,2">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding RatingKind}" Value="ok">
+                                                <Setter Property="Foreground" Value="#0E7C3A" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding RatingKind}" Value="warning">
+                                                <Setter Property="Foreground" Value="#B45309" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding RatingKind}" Value="error">
+                                                <Setter Property="Foreground" Value="#B42318" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</UserControl>

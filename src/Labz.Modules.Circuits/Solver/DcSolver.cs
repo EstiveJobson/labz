@@ -518,7 +518,48 @@ public sealed class DcSolver
                         [$"{battery.Id}.emf.P", "usage.peakSunHours"]));
                 }
             }
+
+            AddLoadAutonomy(results, prefix, usableWh, energy);
         }
+    }
+
+    private void AddLoadAutonomy(ResultStore results, string prefix, double usableWh, EnergySettings? energy)
+    {
+        if (prefix != "energy"
+            || energy?.LoadHoursPerDay is not double loadHours
+            || results.TryGet(prefix + ".autonomy.d", out _)
+            || !results.TryGet("load.P", out var loadPower)
+            || loadPower is null
+            || loadPower.Value <= 1e-4)
+        {
+            return;
+        }
+
+        var whPerDay = _formulas.EvaluateWorking(
+            "energy.Wh_day",
+            Quantity.Of(loadPower.Value, KnownUnits.Watt),
+            Quantity.Of(loadHours, KnownUnits.Hour));
+        results.Add(Result(
+            prefix + ".load.Wh_day",
+            whPerDay,
+            "Wh/day",
+            "energy.Wh_day",
+            ["load.P", "usage.loadHoursPerDay"]));
+        if (whPerDay <= 0)
+        {
+            return;
+        }
+
+        var autonomy = _formulas.EvaluateWorking(
+            "energy.autonomy_d",
+            Quantity.Of(usableWh, KnownUnits.WattHour),
+            Quantity.Of(whPerDay, KnownUnits.WattHourPerDay));
+        results.Add(Result(
+            prefix + ".load.autonomy.d",
+            autonomy,
+            "d",
+            "energy.autonomy_d",
+            [prefix + ".usable.Wh", prefix + ".load.Wh_day"]));
     }
 
     private double PowerVI(double voltage, double current) =>

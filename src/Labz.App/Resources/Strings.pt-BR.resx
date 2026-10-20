@@ -33,4 +33,133 @@
   <data name="UnderConstruction" xml:space="preserve">
     <value>Em construção</value>
   </data>
+  <data name="LibraryHeader" xml:space="preserve">
+    <value>Biblioteca</value>
+  </data>
+  <data name="PropertiesHeader" xml:space="preserve">
+    <value>Propriedades</value>
+  </data>
+  <data name="Undo" xml:space="preserve">
+    <value>Desfazer</value>
+  </data>
+  <data name="Redo" xml:space="preserve">
+    <value>Refazer</value>
+  </data>
+  <data name="Rotate" xml:space="preserve">
+    <value>Girar</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>Apagar</value>
+  </data>
+  <data name="PlaceHint" xml:space="preserve">
+    <value>Clique no esquema para colocar {0}.</value>
+  </data>
+  <data name="WireHint" xml:space="preserve">
+    <value>Clique em outro pino, ou num fio, para ligar.</value>
+  </data>
+  <data name="NoSelection" xml:space="preserve">
+    <value>Selecione um componente.</value>
+  </data>
+  <data name="SwitchClosed" xml:space="preserve">
+    <value>Fechada</value>
+  </data>
+  <data name="SwitchOpen" xml:space="preserve">
+    <value>Aberta</value>
+  </data>
+  <data name="SchottkyPreset" xml:space="preserve">
+    <value>Predefinição Schottky</value>
+  </data>
+  <data name="StandardDiodePreset" xml:space="preserve">
+    <value>Predefinição 1N4148</value>
+  </data>
+  <data name="NewProjectName" xml:space="preserve">
+    <value>Sem título</value>
+  </data>
+  <data name="ColumnId" xml:space="preserve">
+    <value>ID</value>
+  </data>
+  <data name="ColumnType" xml:space="preserve">
+    <value>Tipo</value>
+  </data>
+  <data name="ColumnVoltage" xml:space="preserve">
+    <value>Tensão</value>
+  </data>
+  <data name="ColumnCurrent" xml:space="preserve">
+    <value>Corrente</value>
+  </data>
+  <data name="ColumnPower" xml:space="preserve">
+    <value>Potência</value>
+  </data>
+  <data name="ColumnRating" xml:space="preserve">
+    <value>Potência nominal</value>
+  </data>
+  <data name="ValidationHeader" xml:space="preserve">
+    <value>Validação</value>
+  </data>
+  <data name="Calculating" xml:space="preserve">
+    <value>Calculando…</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="LoadHours" xml:space="preserve">
+    <value>Horas de uso por dia</value>
+  </data>
+  <data name="PeakSunHours" xml:space="preserve">
+    <value>Horas de sol pico</value>
+  </data>
+  <data name="HoursInvalid" xml:space="preserve">
+    <value>As horas por dia devem ficar entre 0 e 24.</value>
+  </data>
+  <data name="ChargeEfficiencyLabel" xml:space="preserve">
+    <value>Eficiência de carga: 1,0</value>
+  </data>
+  <data name="FixSchematicMessage" xml:space="preserve">
+    <value>Corrija os problemas do esquema para calcular.</value>
+  </data>
+  <data name="NewProject" xml:space="preserve">
+    <value>Novo projeto</value>
+  </data>
+  <data name="OpenProject" xml:space="preserve">
+    <value>Abrir</value>
+  </data>
+  <data name="OpenRef1" xml:space="preserve">
+    <value>Abrir modelo REF-1</value>
+  </data>
+  <data name="NewFromIdea" xml:space="preserve">
+    <value>Novo projeto a partir de uma ideia</value>
+  </data>
+  <data name="IdeaHint" xml:space="preserve">
+    <value>Disponível quando o Assistente chegar</value>
+  </data>
+  <data name="RecentProjects" xml:space="preserve">
+    <value>Projetos recentes</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Salvar</value>
+  </data>
+  <data name="SaveAs" xml:space="preserve">
+    <value>Salvar como</value>
+  </data>
+  <data name="DiscardChanges" xml:space="preserve">
+    <value>Há alterações não salvas. Deseja descartá-las?</value>
+  </data>
+  <data name="ChooseFolder" xml:space="preserve">
+    <value>Escolha a pasta do projeto</value>
+  </data>
+  <data name="AutosaveLabel" xml:space="preserve">
+    <value>Salvamento automático (minutos)</value>
+  </data>
+  <data name="AutosaveHint" xml:space="preserve">
+    <value>De 1 a 60 minutos. O padrão é 2.</value>
+  </data>
+  <data name="SignificantDigitsLabel" xml:space="preserve">
+    <value>Algarismos significativos</value>
+  </data>
+  <data name="NoRecentProjects" xml:space="preserve">
+    <value>Nenhum projeto recente.</value>
+  </data>
+  <data name="SaveFailed" xml:space="preserve">
+    <value>Não foi possível salvar o projeto.</value>
+  </data>
 </root>

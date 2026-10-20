@@ -2,7 +2,7 @@
 
 LABZ is a personal Windows desktop app for Sérgio. It turns a plain-text hardware idea in Portuguese into a real, validated, simulated design. The app is built as modules on a shared core. v0 is Core plus the Circuits module.
 
-**Status:** M1 adds unit-safe quantities and the DC engine. Schematics, ngspice, and Grok are later milestones.
+**Status:** M2 adds the project file, a manual schematic editor, and live DC energy results. ngspice and Grok are later milestones.
 
 ## Prerequisites
 
@@ -38,11 +38,13 @@ labz/
 ├─ tests/
 │  ├─ Labz.Core.Units.Tests/
 │  ├─ Labz.Core.Engine.Tests/
+│  ├─ Labz.Core.Project.Tests/
 │  ├─ Labz.Modules.Circuits.Tests/
+│  ├─ Labz.App.Tests/            # view models; runs on Windows
 │  └─ Labz.Architecture.Tests/   # CORE-7: core assemblies must not reference WPF
 ├─ native/ngspice/x64/           # ngspice.dll + BSD-3 LICENSE, added in M3
-├─ schemas/                      # Grok and project JSON schemas, later milestones
-├─ samples/                      # REF-1, later milestones
+├─ schemas/                      # project.v0.json; Grok schemas arrive in M4
+├─ samples/                      # REF-1 solar LED project
 └─ docs/                         # supplementary notes; the spec stays at the root
 ```
 

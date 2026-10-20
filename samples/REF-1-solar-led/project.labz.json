@@ -1,0 +1,1353 @@
+{
+  "schemaVersion": "0.1",
+  "id": "3f1c0a7e-5b44-4d2a-8c11-0a1b2c3d4e5f",
+  "name": "REF-1 painel solar, bateria e LEDs",
+  "createdAt": "2026-10-18T16:00:00-03:00",
+  "idea": "Painel solar de 18 V carregando uma bateria de 12 V que alimenta uma fita de LEDs com resistor. Os LEDs ficam ligados 6 h por dia e o painel tem 5 h de sol pico.",
+  "modules": {
+    "circuits": {
+      "components": [
+        {
+          "id": "PV1",
+          "type": "solar_panel",
+          "params": {
+            "openCircuitVoltage": "18 V",
+            "seriesResistance": "5 Ω",
+            "ratedPower": "20 W"
+          },
+          "pins": [
+            "+",
+            "-"
+          ],
+          "layout": {
+            "x": 120,
+            "y": 160,
+            "rotation": 0
+          }
+        },
+        {
+          "id": "S1",
+          "type": "switch",
+          "params": {
+            "state": "open",
+            "Ron": "1 mΩ",
+            "Roff": "1 GΩ"
+          },
+          "pins": [
+            "1",
+            "2"
+          ],
+          "layout": {
+            "x": 300,
+            "y": 160,
+            "rotation": 0
+          }
+        },
+        {
+          "id": "S2",
+          "type": "switch",
+          "params": {
+            "state": "closed",
+            "Ron": "1 mΩ",
+            "Roff": "1 GΩ"
+          },
+          "pins": [
+            "1",
+            "2"
+          ],
+          "layout": {
+            "x": 560,
+            "y": 160,
+            "rotation": 0
+          }
+        },
+        {
+          "id": "BAT1",
+          "type": "battery",
+          "params": {
+            "nominalVoltage": "12 V",
+            "internalResistance": "0,1 Ω",
+            "capacity": "7 Ah",
+            "usableDepthOfDischarge": "0,5"
+          },
+          "pins": [
+            "+",
+            "-"
+          ],
+          "layout": {
+            "x": 440,
+            "y": 340,
+            "rotation": 270
+          }
+        },
+        {
+          "id": "GND",
+          "type": "ground",
+          "params": {},
+          "pins": [
+            "g"
+          ],
+          "layout": {
+            "x": 440,
+            "y": 560,
+            "rotation": 0
+          }
+        },
+        {
+          "id": "R1",
+          "type": "resistor",
+          "params": {
+            "resistance": "150 Ω",
+            "powerRating": "0,25 W"
+          },
+          "pins": [
+            "1",
+            "2"
+          ],
+          "layout": {
+            "x": 780,
+            "y": 160,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "L1A",
+          "type": "led",
+          "params": {
+            "forwardVoltage": "3 V",
+            "forwardCurrent": "20 mA",
+            "color": "branco"
+          },
+          "pins": [
+            "A",
+            "K"
+          ],
+          "layout": {
+            "x": 780,
+            "y": 320,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "L1B",
+          "type": "led",
+          "params": {
+            "forwardVoltage": "3 V",
+            "forwardCurrent": "20 mA",
+            "color": "branco"
+          },
+          "pins": [
+            "A",
+            "K"
+          ],
+          "layout": {
+            "x": 780,
+            "y": 480,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "L1C",
+          "type": "led",
+          "params": {
+            "forwardVoltage": "3 V",
+            "forwardCurrent": "20 mA",
+            "color": "branco"
+          },
+          "pins": [
+            "A",
+            "K"
+          ],
+          "layout": {
+            "x": 780,
+            "y": 640,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "R2",
+          "type": "resistor",
+          "params": {
+            "resistance": "150 Ω",
+            "powerRating": "0,25 W"
+          },
+          "pins": [
+            "1",
+            "2"
+          ],
+          "layout": {
+            "x": 900,
+            "y": 160,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "L2A",
+          "type": "led",
+          "params": {
+            "forwardVoltage": "3 V",
+            "forwardCurrent": "20 mA",
+            "color": "branco"
+          },
+          "pins": [
+            "A",
+            "K"
+          ],
+          "layout": {
+            "x": 900,
+            "y": 320,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "L2B",
+          "type": "led",
+          "params": {
+            "forwardVoltage": "3 V",
+            "forwardCurrent": "20 mA",
+            "color": "branco"
+          },
+          "pins": [
+            "A",
+            "K"
+          ],
+          "layout": {
+            "x": 900,
+            "y": 480,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "L2C",
+          "type": "led",
+          "params": {
+            "forwardVoltage": "3 V",
+            "forwardCurrent": "20 mA",
+            "color": "branco"
+          },
+          "pins": [
+            "A",
+            "K"
+          ],
+          "layout": {
+            "x": 900,
+            "y": 640,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "R3",
+          "type": "resistor",
+          "params": {
+            "resistance": "150 Ω",
+            "powerRating": "0,25 W"
+          },
+          "pins": [
+            "1",
+            "2"
+          ],
+          "layout": {
+            "x": 1020,
+            "y": 160,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "L3A",
+          "type": "led",
+          "params": {
+            "forwardVoltage": "3 V",
+            "forwardCurrent": "20 mA",
+            "color": "branco"
+          },
+          "pins": [
+            "A",
+            "K"
+          ],
+          "layout": {
+            "x": 1020,
+            "y": 320,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "L3B",
+          "type": "led",
+          "params": {
+            "forwardVoltage": "3 V",
+            "forwardCurrent": "20 mA",
+            "color": "branco"
+          },
+          "pins": [
+            "A",
+            "K"
+          ],
+          "layout": {
+            "x": 1020,
+            "y": 480,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "L3C",
+          "type": "led",
+          "params": {
+            "forwardVoltage": "3 V",
+            "forwardCurrent": "20 mA",
+            "color": "branco"
+          },
+          "pins": [
+            "A",
+            "K"
+          ],
+          "layout": {
+            "x": 1020,
+            "y": 640,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "R4",
+          "type": "resistor",
+          "params": {
+            "resistance": "150 Ω",
+            "powerRating": "0,25 W"
+          },
+          "pins": [
+            "1",
+            "2"
+          ],
+          "layout": {
+            "x": 1140,
+            "y": 160,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "L4A",
+          "type": "led",
+          "params": {
+            "forwardVoltage": "3 V",
+            "forwardCurrent": "20 mA",
+            "color": "branco"
+          },
+          "pins": [
+            "A",
+            "K"
+          ],
+          "layout": {
+            "x": 1140,
+            "y": 320,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "L4B",
+          "type": "led",
+          "params": {
+            "forwardVoltage": "3 V",
+            "forwardCurrent": "20 mA",
+            "color": "branco"
+          },
+          "pins": [
+            "A",
+            "K"
+          ],
+          "layout": {
+            "x": 1140,
+            "y": 480,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "L4C",
+          "type": "led",
+          "params": {
+            "forwardVoltage": "3 V",
+            "forwardCurrent": "20 mA",
+            "color": "branco"
+          },
+          "pins": [
+            "A",
+            "K"
+          ],
+          "layout": {
+            "x": 1140,
+            "y": 640,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "R5",
+          "type": "resistor",
+          "params": {
+            "resistance": "150 Ω",
+            "powerRating": "0,25 W"
+          },
+          "pins": [
+            "1",
+            "2"
+          ],
+          "layout": {
+            "x": 1260,
+            "y": 160,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "L5A",
+          "type": "led",
+          "params": {
+            "forwardVoltage": "3 V",
+            "forwardCurrent": "20 mA",
+            "color": "branco"
+          },
+          "pins": [
+            "A",
+            "K"
+          ],
+          "layout": {
+            "x": 1260,
+            "y": 320,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "L5B",
+          "type": "led",
+          "params": {
+            "forwardVoltage": "3 V",
+            "forwardCurrent": "20 mA",
+            "color": "branco"
+          },
+          "pins": [
+            "A",
+            "K"
+          ],
+          "layout": {
+            "x": 1260,
+            "y": 480,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "L5C",
+          "type": "led",
+          "params": {
+            "forwardVoltage": "3 V",
+            "forwardCurrent": "20 mA",
+            "color": "branco"
+          },
+          "pins": [
+            "A",
+            "K"
+          ],
+          "layout": {
+            "x": 1260,
+            "y": 640,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "R6",
+          "type": "resistor",
+          "params": {
+            "resistance": "150 Ω",
+            "powerRating": "0,25 W"
+          },
+          "pins": [
+            "1",
+            "2"
+          ],
+          "layout": {
+            "x": 1380,
+            "y": 160,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "L6A",
+          "type": "led",
+          "params": {
+            "forwardVoltage": "3 V",
+            "forwardCurrent": "20 mA",
+            "color": "branco"
+          },
+          "pins": [
+            "A",
+            "K"
+          ],
+          "layout": {
+            "x": 1380,
+            "y": 320,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "L6B",
+          "type": "led",
+          "params": {
+            "forwardVoltage": "3 V",
+            "forwardCurrent": "20 mA",
+            "color": "branco"
+          },
+          "pins": [
+            "A",
+            "K"
+          ],
+          "layout": {
+            "x": 1380,
+            "y": 480,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "L6C",
+          "type": "led",
+          "params": {
+            "forwardVoltage": "3 V",
+            "forwardCurrent": "20 mA",
+            "color": "branco"
+          },
+          "pins": [
+            "A",
+            "K"
+          ],
+          "layout": {
+            "x": 1380,
+            "y": 640,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "R7",
+          "type": "resistor",
+          "params": {
+            "resistance": "150 Ω",
+            "powerRating": "0,25 W"
+          },
+          "pins": [
+            "1",
+            "2"
+          ],
+          "layout": {
+            "x": 1500,
+            "y": 160,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "L7A",
+          "type": "led",
+          "params": {
+            "forwardVoltage": "3 V",
+            "forwardCurrent": "20 mA",
+            "color": "branco"
+          },
+          "pins": [
+            "A",
+            "K"
+          ],
+          "layout": {
+            "x": 1500,
+            "y": 320,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "L7B",
+          "type": "led",
+          "params": {
+            "forwardVoltage": "3 V",
+            "forwardCurrent": "20 mA",
+            "color": "branco"
+          },
+          "pins": [
+            "A",
+            "K"
+          ],
+          "layout": {
+            "x": 1500,
+            "y": 480,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "L7C",
+          "type": "led",
+          "params": {
+            "forwardVoltage": "3 V",
+            "forwardCurrent": "20 mA",
+            "color": "branco"
+          },
+          "pins": [
+            "A",
+            "K"
+          ],
+          "layout": {
+            "x": 1500,
+            "y": 640,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "R8",
+          "type": "resistor",
+          "params": {
+            "resistance": "150 Ω",
+            "powerRating": "0,25 W"
+          },
+          "pins": [
+            "1",
+            "2"
+          ],
+          "layout": {
+            "x": 1620,
+            "y": 160,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "L8A",
+          "type": "led",
+          "params": {
+            "forwardVoltage": "3 V",
+            "forwardCurrent": "20 mA",
+            "color": "branco"
+          },
+          "pins": [
+            "A",
+            "K"
+          ],
+          "layout": {
+            "x": 1620,
+            "y": 320,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "L8B",
+          "type": "led",
+          "params": {
+            "forwardVoltage": "3 V",
+            "forwardCurrent": "20 mA",
+            "color": "branco"
+          },
+          "pins": [
+            "A",
+            "K"
+          ],
+          "layout": {
+            "x": 1620,
+            "y": 480,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "L8C",
+          "type": "led",
+          "params": {
+            "forwardVoltage": "3 V",
+            "forwardCurrent": "20 mA",
+            "color": "branco"
+          },
+          "pins": [
+            "A",
+            "K"
+          ],
+          "layout": {
+            "x": 1620,
+            "y": 640,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "R9",
+          "type": "resistor",
+          "params": {
+            "resistance": "150 Ω",
+            "powerRating": "0,25 W"
+          },
+          "pins": [
+            "1",
+            "2"
+          ],
+          "layout": {
+            "x": 1740,
+            "y": 160,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "L9A",
+          "type": "led",
+          "params": {
+            "forwardVoltage": "3 V",
+            "forwardCurrent": "20 mA",
+            "color": "branco"
+          },
+          "pins": [
+            "A",
+            "K"
+          ],
+          "layout": {
+            "x": 1740,
+            "y": 320,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "L9B",
+          "type": "led",
+          "params": {
+            "forwardVoltage": "3 V",
+            "forwardCurrent": "20 mA",
+            "color": "branco"
+          },
+          "pins": [
+            "A",
+            "K"
+          ],
+          "layout": {
+            "x": 1740,
+            "y": 480,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "L9C",
+          "type": "led",
+          "params": {
+            "forwardVoltage": "3 V",
+            "forwardCurrent": "20 mA",
+            "color": "branco"
+          },
+          "pins": [
+            "A",
+            "K"
+          ],
+          "layout": {
+            "x": 1740,
+            "y": 640,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "R10",
+          "type": "resistor",
+          "params": {
+            "resistance": "150 Ω",
+            "powerRating": "0,25 W"
+          },
+          "pins": [
+            "1",
+            "2"
+          ],
+          "layout": {
+            "x": 1860,
+            "y": 160,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "L10A",
+          "type": "led",
+          "params": {
+            "forwardVoltage": "3 V",
+            "forwardCurrent": "20 mA",
+            "color": "branco"
+          },
+          "pins": [
+            "A",
+            "K"
+          ],
+          "layout": {
+            "x": 1860,
+            "y": 320,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "L10B",
+          "type": "led",
+          "params": {
+            "forwardVoltage": "3 V",
+            "forwardCurrent": "20 mA",
+            "color": "branco"
+          },
+          "pins": [
+            "A",
+            "K"
+          ],
+          "layout": {
+            "x": 1860,
+            "y": 480,
+            "rotation": 90
+          }
+        },
+        {
+          "id": "L10C",
+          "type": "led",
+          "params": {
+            "forwardVoltage": "3 V",
+            "forwardCurrent": "20 mA",
+            "color": "branco"
+          },
+          "pins": [
+            "A",
+            "K"
+          ],
+          "layout": {
+            "x": 1860,
+            "y": 640,
+            "rotation": 90
+          }
+        }
+      ],
+      "nets": [
+        {
+          "id": "PV_OUT",
+          "connections": [
+            [
+              "PV1",
+              "+"
+            ],
+            [
+              "S1",
+              "1"
+            ]
+          ]
+        },
+        {
+          "id": "N_BAT",
+          "connections": [
+            [
+              "S1",
+              "2"
+            ],
+            [
+              "BAT1",
+              "+"
+            ],
+            [
+              "S2",
+              "1"
+            ]
+          ]
+        },
+        {
+          "id": "N_LOAD",
+          "connections": [
+            [
+              "S2",
+              "2"
+            ],
+            [
+              "R1",
+              "1"
+            ],
+            [
+              "R2",
+              "1"
+            ],
+            [
+              "R3",
+              "1"
+            ],
+            [
+              "R4",
+              "1"
+            ],
+            [
+              "R5",
+              "1"
+            ],
+            [
+              "R6",
+              "1"
+            ],
+            [
+              "R7",
+              "1"
+            ],
+            [
+              "R8",
+              "1"
+            ],
+            [
+              "R9",
+              "1"
+            ],
+            [
+              "R10",
+              "1"
+            ]
+          ]
+        },
+        {
+          "id": "0",
+          "connections": [
+            [
+              "PV1",
+              "-"
+            ],
+            [
+              "BAT1",
+              "-"
+            ],
+            [
+              "GND",
+              "g"
+            ],
+            [
+              "L1C",
+              "K"
+            ],
+            [
+              "L2C",
+              "K"
+            ],
+            [
+              "L3C",
+              "K"
+            ],
+            [
+              "L4C",
+              "K"
+            ],
+            [
+              "L5C",
+              "K"
+            ],
+            [
+              "L6C",
+              "K"
+            ],
+            [
+              "L7C",
+              "K"
+            ],
+            [
+              "L8C",
+              "K"
+            ],
+            [
+              "L9C",
+              "K"
+            ],
+            [
+              "L10C",
+              "K"
+            ]
+          ]
+        },
+        {
+          "id": "NR1",
+          "connections": [
+            [
+              "R1",
+              "2"
+            ],
+            [
+              "L1A",
+              "A"
+            ]
+          ]
+        },
+        {
+          "id": "N1AB",
+          "connections": [
+            [
+              "L1A",
+              "K"
+            ],
+            [
+              "L1B",
+              "A"
+            ]
+          ]
+        },
+        {
+          "id": "N1BC",
+          "connections": [
+            [
+              "L1B",
+              "K"
+            ],
+            [
+              "L1C",
+              "A"
+            ]
+          ]
+        },
+        {
+          "id": "NR2",
+          "connections": [
+            [
+              "R2",
+              "2"
+            ],
+            [
+              "L2A",
+              "A"
+            ]
+          ]
+        },
+        {
+          "id": "N2AB",
+          "connections": [
+            [
+              "L2A",
+              "K"
+            ],
+            [
+              "L2B",
+              "A"
+            ]
+          ]
+        },
+        {
+          "id": "N2BC",
+          "connections": [
+            [
+              "L2B",
+              "K"
+            ],
+            [
+              "L2C",
+              "A"
+            ]
+          ]
+        },
+        {
+          "id": "NR3",
+          "connections": [
+            [
+              "R3",
+              "2"
+            ],
+            [
+              "L3A",
+              "A"
+            ]
+          ]
+        },
+        {
+          "id": "N3AB",
+          "connections": [
+            [
+              "L3A",
+              "K"
+            ],
+            [
+              "L3B",
+              "A"
+            ]
+          ]
+        },
+        {
+          "id": "N3BC",
+          "connections": [
+            [
+              "L3B",
+              "K"
+            ],
+            [
+              "L3C",
+              "A"
+            ]
+          ]
+        },
+        {
+          "id": "NR4",
+          "connections": [
+            [
+              "R4",
+              "2"
+            ],
+            [
+              "L4A",
+              "A"
+            ]
+          ]
+        },
+        {
+          "id": "N4AB",
+          "connections": [
+            [
+              "L4A",
+              "K"
+            ],
+            [
+              "L4B",
+              "A"
+            ]
+          ]
+        },
+        {
+          "id": "N4BC",
+          "connections": [
+            [
+              "L4B",
+              "K"
+            ],
+            [
+              "L4C",
+              "A"
+            ]
+          ]
+        },
+        {
+          "id": "NR5",
+          "connections": [
+            [
+              "R5",
+              "2"
+            ],
+            [
+              "L5A",
+              "A"
+            ]
+          ]
+        },
+        {
+          "id": "N5AB",
+          "connections": [
+            [
+              "L5A",
+              "K"
+            ],
+            [
+              "L5B",
+              "A"
+            ]
+          ]
+        },
+        {
+          "id": "N5BC",
+          "connections": [
+            [
+              "L5B",
+              "K"
+            ],
+            [
+              "L5C",
+              "A"
+            ]
+          ]
+        },
+        {
+          "id": "NR6",
+          "connections": [
+            [
+              "R6",
+              "2"
+            ],
+            [
+              "L6A",
+              "A"
+            ]
+          ]
+        },
+        {
+          "id": "N6AB",
+          "connections": [
+            [
+              "L6A",
+              "K"
+            ],
+            [
+              "L6B",
+              "A"
+            ]
+          ]
+        },
+        {
+          "id": "N6BC",
+          "connections": [
+            [
+              "L6B",
+              "K"
+            ],
+            [
+              "L6C",
+              "A"
+            ]
+          ]
+        },
+        {
+          "id": "NR7",
+          "connections": [
+            [
+              "R7",
+              "2"
+            ],
+            [
+              "L7A",
+              "A"
+            ]
+          ]
+        },
+        {
+          "id": "N7AB",
+          "connections": [
+            [
+              "L7A",
+              "K"
+            ],
+            [
+              "L7B",
+              "A"
+            ]
+          ]
+        },
+        {
+          "id": "N7BC",
+          "connections": [
+            [
+              "L7B",
+              "K"
+            ],
+            [
+              "L7C",
+              "A"
+            ]
+          ]
+        },
+        {
+          "id": "NR8",
+          "connections": [
+            [
+              "R8",
+              "2"
+            ],
+            [
+              "L8A",
+              "A"
+            ]
+          ]
+        },
+        {
+          "id": "N8AB",
+          "connections": [
+            [
+              "L8A",
+              "K"
+            ],
+            [
+              "L8B",
+              "A"
+            ]
+          ]
+        },
+        {
+          "id": "N8BC",
+          "connections": [
+            [
+              "L8B",
+              "K"
+            ],
+            [
+              "L8C",
+              "A"
+            ]
+          ]
+        },
+        {
+          "id": "NR9",
+          "connections": [
+            [
+              "R9",
+              "2"
+            ],
+            [
+              "L9A",
+              "A"
+            ]
+          ]
+        },
+        {
+          "id": "N9AB",
+          "connections": [
+            [
+              "L9A",
+              "K"
+            ],
+            [
+              "L9B",
+              "A"
+            ]
+          ]
+        },
+        {
+          "id": "N9BC",
+          "connections": [
+            [
+              "L9B",
+              "K"
+            ],
+            [
+              "L9C",
+              "A"
+            ]
+          ]
+        },
+        {
+          "id": "NR10",
+          "connections": [
+            [
+              "R10",
+              "2"
+            ],
+            [
+              "L10A",
+              "A"
+            ]
+          ]
+        },
+        {
+          "id": "N10AB",
+          "connections": [
+            [
+              "L10A",
+              "K"
+            ],
+            [
+              "L10B",
+              "A"
+            ]
+          ]
+        },
+        {
+          "id": "N10BC",
+          "connections": [
+            [
+              "L10B",
+              "K"
+            ],
+            [
+              "L10C",
+              "A"
+            ]
+          ]
+        }
+      ],
+      "usageProfiles": [
+        {
+          "target": "LOAD",
+          "hoursPerDay": 6
+        },
+        {
+          "target": "PV1",
+          "hoursPerDay": 5
+        }
+      ],
+      "analyses": [
+        {
+          "type": "op"
+        }
+      ]
+    }
+  },
+  "history": []
+}

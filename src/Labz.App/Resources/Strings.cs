@@ -23,6 +23,92 @@ public static class Strings
 
     public static string UnderConstruction => Get(nameof(UnderConstruction));
 
+    public static string LibraryHeader => Get(nameof(LibraryHeader));
+
+    public static string PropertiesHeader => Get(nameof(PropertiesHeader));
+
+    public static string Undo => Get(nameof(Undo));
+
+    public static string Redo => Get(nameof(Redo));
+
+    public static string Rotate => Get(nameof(Rotate));
+
+    public static string Delete => Get(nameof(Delete));
+
+    public static string PlaceHint => Get(nameof(PlaceHint));
+
+    public static string WireHint => Get(nameof(WireHint));
+
+    public static string NoSelection => Get(nameof(NoSelection));
+
+    public static string SwitchClosed => Get(nameof(SwitchClosed));
+
+    public static string SwitchOpen => Get(nameof(SwitchOpen));
+
+    public static string SchottkyPreset => Get(nameof(SchottkyPreset));
+
+    public static string StandardDiodePreset => Get(nameof(StandardDiodePreset));
+
+    public static string NewProjectName => Get(nameof(NewProjectName));
+
+    public static string ColumnId => Get(nameof(ColumnId));
+
+    public static string ColumnType => Get(nameof(ColumnType));
+
+    public static string ColumnVoltage => Get(nameof(ColumnVoltage));
+
+    public static string ColumnCurrent => Get(nameof(ColumnCurrent));
+
+    public static string ColumnPower => Get(nameof(ColumnPower));
+
+    public static string ColumnRating => Get(nameof(ColumnRating));
+
+    public static string ValidationHeader => Get(nameof(ValidationHeader));
+
+    public static string Calculating => Get(nameof(Calculating));
+
+    public static string Cancel => Get(nameof(Cancel));
+
+    public static string LoadHours => Get(nameof(LoadHours));
+
+    public static string PeakSunHours => Get(nameof(PeakSunHours));
+
+    public static string HoursInvalid => Get(nameof(HoursInvalid));
+
+    public static string ChargeEfficiencyLabel => Get(nameof(ChargeEfficiencyLabel));
+
+    public static string FixSchematicMessage => Get(nameof(FixSchematicMessage));
+
+    public static string NewProject => Get(nameof(NewProject));
+
+    public static string OpenProject => Get(nameof(OpenProject));
+
+    public static string OpenRef1 => Get(nameof(OpenRef1));
+
+    public static string NewFromIdea => Get(nameof(NewFromIdea));
+
+    public static string IdeaHint => Get(nameof(IdeaHint));
+
+    public static string RecentProjects => Get(nameof(RecentProjects));
+
+    public static string Save => Get(nameof(Save));
+
+    public static string SaveAs => Get(nameof(SaveAs));
+
+    public static string DiscardChanges => Get(nameof(DiscardChanges));
+
+    public static string ChooseFolder => Get(nameof(ChooseFolder));
+
+    public static string AutosaveLabel => Get(nameof(AutosaveLabel));
+
+    public static string AutosaveHint => Get(nameof(AutosaveHint));
+
+    public static string SignificantDigitsLabel => Get(nameof(SignificantDigitsLabel));
+
+    public static string NoRecentProjects => Get(nameof(NoRecentProjects));
+
+    public static string SaveFailed => Get(nameof(SaveFailed));
+
     private static string Get(string name)
     {
         return ResourceManager.GetString(name, CultureInfo.CurrentUICulture)

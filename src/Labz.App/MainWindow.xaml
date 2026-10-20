@@ -3,10 +3,11 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:Labz.App.ViewModels"
         Title="{Binding WindowTitle}"
-        Height="640"
-        Width="960"
-        MinHeight="480"
-        MinWidth="720">
+        Height="760"
+        Width="1200"
+        MinHeight="560"
+        MinWidth="960"
+        PreviewKeyDown="OnPreviewKeyDown">
     <Window.DataContext>
         <vm:MainViewModel />
     </Window.DataContext>
@@ -60,8 +61,21 @@
             </ItemsControl>
         </DockPanel>
 
-        <ContentControl Grid.Column="1"
-                        Content="{Binding CurrentPage}"
-                        Margin="32" />
+        <DockPanel Grid.Column="1">
+            <Border DockPanel.Dock="Top" Background="#FEF3C7" Padding="16,10" BorderBrush="#D97706" BorderThickness="0,0,0,1">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Visibility" Value="Visible" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Notice}" Value="{x:Null}">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <TextBlock Text="{Binding Notice}" TextWrapping="Wrap" Foreground="#92400E" />
+            </Border>
+            <ContentControl Content="{Binding CurrentPage}" />
+        </DockPanel>
     </Grid>
 </Window>

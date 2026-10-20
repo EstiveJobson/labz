@@ -1,0 +1,187 @@
+<UserControl x:Class="Labz.App.Views.SchematicView"
+             x:Name="schematicRoot"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:Labz.App.Views">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="280" />
+        </Grid.ColumnDefinitions>
+
+        <DockPanel Grid.Column="0" Margin="12">
+            <TextBlock DockPanel.Dock="Top" Text="{Binding LibraryHeader}" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,8" />
+            <ListBox ItemsSource="{Binding Library}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Button Content="{Binding Name}"
+                                Command="{Binding DataContext.ArmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding Type}"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Left"
+                                Margin="0,2"
+                                Padding="8,6" />
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </DockPanel>
+
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="170" />
+            </Grid.RowDefinitions>
+            <views:SchematicCanvas Grid.Row="0" />
+            <DockPanel Grid.Row="1" Margin="12,4">
+                <TextBlock DockPanel.Dock="Top" Text="{Binding Results.ValidationHeader}" FontWeight="SemiBold" />
+                <TextBlock DockPanel.Dock="Top" Text="{Binding Results.BlockedMessage}" Foreground="#B42318" TextWrapping="Wrap" />
+                <TextBlock DockPanel.Dock="Right" Text="{Binding Status}" Foreground="#52606D" Margin="12,0,0,0" />
+                <ItemsControl ItemsSource="{Binding Results.Problems}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Content="{Binding Message}"
+                                    Command="{Binding DataContext.SelectProblemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="{Binding}"
+                                    HorizontalAlignment="Left"
+                                    HorizontalContentAlignment="Left"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Foreground="#B42318"
+                                    Padding="0,2" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </DockPanel>
+            <DockPanel Grid.Row="2" Margin="12,0,12,8">
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,4">
+                    <TextBlock Text="{Binding Results.BalanceText}" FontWeight="SemiBold" Margin="0,0,12,0" />
+                    <TextBlock Text="{Binding Results.SignConvention}" Foreground="#52606D" />
+                    <TextBlock Text="{Binding Results.Calculating}" Margin="12,0,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Results.ShowProgress}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <Button Content="{Binding Results.CancelLabel}" Command="{Binding Results.CancelCommand}" Margin="8,0,0,0" Padding="8,2" />
+                </StackPanel>
+                <ListView ItemsSource="{Binding Results.Rows}">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="{Binding Results.ColumnId, Source={x:Reference schematicRoot}}" DisplayMemberBinding="{Binding Id}" Width="70" />
+                            <GridViewColumn Header="{Binding Results.ColumnType, Source={x:Reference schematicRoot}}" DisplayMemberBinding="{Binding TypeName}" Width="120" />
+                            <GridViewColumn Header="{Binding Results.ColumnVoltage, Source={x:Reference schematicRoot}}" Width="90">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Voltage}" ToolTip="{Binding VoltageTrace}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="{Binding Results.ColumnCurrent, Source={x:Reference schematicRoot}}" Width="90">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Current}" ToolTip="{Binding CurrentTrace}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="{Binding Results.ColumnPower, Source={x:Reference schematicRoot}}" Width="90">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Power}" ToolTip="{Binding PowerTrace}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="{Binding Results.ColumnRating, Source={x:Reference schematicRoot}}" Width="120">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding RatingText}" ToolTip="{Binding RatingTrace}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </DockPanel>
+        </Grid>
+
+        <DockPanel Grid.Column="2" Margin="12">
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,12">
+                <Button Content="{Binding UndoLabel}" Command="{Binding UndoCommand}" Margin="0,0,6,0" Padding="8,4" />
+                <Button Content="{Binding RedoLabel}" Command="{Binding RedoCommand}" Margin="0,0,6,0" Padding="8,4" />
+                <Button Content="{Binding RotateLabel}" Command="{Binding RotateCommand}" Margin="0,0,6,0" Padding="8,4" />
+                <Button Content="{Binding DeleteLabel}" Command="{Binding DeleteCommand}" Padding="8,4" />
+            </StackPanel>
+            <TextBlock DockPanel.Dock="Top" Text="{Binding PropertiesHeader}" FontSize="16" FontWeight="SemiBold" />
+            <TextBlock DockPanel.Dock="Top" Text="{Binding SelectionTitle}" Margin="0,8,0,8" />
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                <Button Content="{Binding StandardDiodeLabel}" Command="{Binding StandardDiodeCommand}" Margin="0,0,6,0" Padding="8,4">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ShowDiodePresets}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <Button Content="{Binding SchottkyLabel}" Command="{Binding SchottkyCommand}" Padding="8,4">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ShowDiodePresets}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </StackPanel>
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding Fields}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="0,0,0,10">
+                                <TextBlock Text="{Binding Label}" />
+                                <TextBox Text="{Binding Text, UpdateSourceTrigger=LostFocus}" Margin="0,4,0,0">
+                                    <TextBox.Style>
+                                        <Style TargetType="TextBox">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsSwitch}" Value="True">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBox.Style>
+                                </TextBox>
+                                <CheckBox Content="{Binding SwitchLabel}" IsChecked="{Binding IsClosed, Mode=TwoWay}" Margin="0,4,0,0">
+                                    <CheckBox.Style>
+                                        <Style TargetType="CheckBox">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsSwitch}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </CheckBox.Style>
+                                </CheckBox>
+                                <TextBlock Text="{Binding Error}" Foreground="#B42318" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </DockPanel>
+    </Grid>
+</UserControl>

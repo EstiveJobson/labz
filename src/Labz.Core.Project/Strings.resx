@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="NewerVersion" xml:space="preserve">
+    <value>Este projeto foi criado por uma versão mais nova do LABZ e não pode ser aberto.</value>
+  </data>
+  <data name="InvalidFile" xml:space="preserve">
+    <value>O arquivo do projeto não é válido.</value>
+  </data>
+  <data name="Unreadable" xml:space="preserve">
+    <value>Não foi possível ler o arquivo do projeto.</value>
+  </data>
+  <data name="MissingFile" xml:space="preserve">
+    <value>A pasta do projeto não contém project.labz.json.</value>
+  </data>
+  <data name="DuplicateComponent" xml:space="preserve">
+    <value>O projeto repete o componente "{0}".</value>
+  </data>
+  <data name="UnknownComponent" xml:space="preserve">
+    <value>A rede "{0}" cita o componente desconhecido "{1}".</value>
+  </data>
+  <data name="UnknownPin" xml:space="preserve">
+    <value>O componente "{0}" não tem o pino "{1}".</value>
+  </data>
+  <data name="PinConnectedTwice" xml:space="preserve">
+    <value>O pino "{0}.{1}" está ligado mais de uma vez.</value>
+  </data>
+  <data name="ConnectionShape" xml:space="preserve">
+    <value>Uma ligação da rede "{0}" não é um par componente/pino.</value>
+  </data>
+  <data name="AutosaveRange" xml:space="preserve">
+    <value>O intervalo de salvamento automático deve ficar entre 1 e 60 minutos.</value>
+  </data>
+  <data name="DigitsRange" xml:space="preserve">
+    <value>Os algarismos significativos devem ficar entre 1 e 8.</value>
+  </data>
+  <data name="NonFiniteNumber" xml:space="preserve">
+    <value>O arquivo do projeto contém um número que não é finito.</value>
+  </data>
+  <data name="RotationStep" xml:space="preserve">
+    <value>A rotação de um componente deve ser 0, 90, 180 ou 270 graus.</value>
+  </data>
+  <data name="UsageHours" xml:space="preserve">
+    <value>As horas por dia devem ser um número entre 0 e 24.</value>
+  </data>
+  <data name="NotUtf8" xml:space="preserve">
+    <value>O arquivo do projeto não está em UTF-8.</value>
+  </data>
+  <data name="ReservedId" xml:space="preserve">
+    <value>O identificador "{0}" é reservado pelo cálculo.</value>
+  </data>
+</root>
