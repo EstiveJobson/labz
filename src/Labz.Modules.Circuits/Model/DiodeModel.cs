@@ -1,36 +1,38 @@
 namespace Labz.Modules.Circuits;
 
 /// <summary>
-/// Shockley diode parameters. At and above -BreakdownVoltage the current is the Shockley current.
-/// Below that voltage the junction also conducts through a 1 S slope.
+/// Shockley parameters used by the DC equation. Reverse breakdown is not part of this model.
 /// </summary>
-public sealed record DiodeModel(
-    double SaturationCurrent,
-    double EmissionCoefficient,
-    double SeriesResistance,
-    double BreakdownVoltage)
+public sealed record DiodeModel(double SaturationCurrent, double EmissionCoefficient, double SeriesResistance)
 {
-    public void EnsureValid()
+    public double SaturationCurrent { get; init; } = Require(SaturationCurrent, EmissionCoefficient, SeriesResistance).Current;
+
+    public double EmissionCoefficient { get; init; } = Require(SaturationCurrent, EmissionCoefficient, SeriesResistance).Emission;
+
+    public double SeriesResistance { get; init; } = Require(SaturationCurrent, EmissionCoefficient, SeriesResistance).Resistance;
+
+    public void EnsureValid() => Require(SaturationCurrent, EmissionCoefficient, SeriesResistance);
+
+    private readonly record struct Checked(double Current, double Emission, double Resistance);
+
+    private static Checked Require(double saturationCurrent, double emissionCoefficient, double seriesResistance)
     {
-        if (!double.IsFinite(SaturationCurrent) || SaturationCurrent <= 0)
+        if (!double.IsFinite(saturationCurrent) || saturationCurrent <= 0)
         {
             throw new ArgumentOutOfRangeException(nameof(SaturationCurrent), Strings.PositiveFinite(nameof(SaturationCurrent)));
         }
 
-        if (!double.IsFinite(EmissionCoefficient) || EmissionCoefficient <= 0)
+        if (!double.IsFinite(emissionCoefficient) || emissionCoefficient <= 0)
         {
             throw new ArgumentOutOfRangeException(nameof(EmissionCoefficient), Strings.PositiveFinite(nameof(EmissionCoefficient)));
         }
 
-        if (!double.IsFinite(SeriesResistance) || SeriesResistance < 0)
+        if (!double.IsFinite(seriesResistance) || seriesResistance < 0)
         {
             throw new ArgumentOutOfRangeException(nameof(SeriesResistance), Strings.NonNegativeFinite(nameof(SeriesResistance)));
         }
 
-        if (!double.IsFinite(BreakdownVoltage) || BreakdownVoltage <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(BreakdownVoltage), Strings.PositiveFinite(nameof(BreakdownVoltage)));
-        }
+        return new Checked(saturationCurrent, emissionCoefficient, seriesResistance);
     }
 }
 
@@ -51,12 +53,10 @@ public static class DiodePresets
     public static DiodeModel In4148 { get; } = new(
         SaturationCurrent: 2.682e-9,
         EmissionCoefficient: 1.836,
-        SeriesResistance: 0.5664,
-        BreakdownVoltage: 100);
+        SeriesResistance: 0.5664);
 
     public static DiodeModel Schottky { get; } = new(
         SaturationCurrent: 31.7e-6,
         EmissionCoefficient: 1.373,
-        SeriesResistance: 0.051,
-        BreakdownVoltage: 40);
+        SeriesResistance: 0.051);
 }

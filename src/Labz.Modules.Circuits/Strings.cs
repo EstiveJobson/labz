@@ -19,6 +19,8 @@ internal static class Strings
 
     public static string NoConvergence(string components) => Format("NoConvergence", components);
 
+    public static string PowerBalance(string components) => Format("PowerBalance", components);
+
     public static string PowerRatingOk => Get("PowerRatingOk");
 
     public static string PowerRatingWarning => Get("PowerRatingWarning");

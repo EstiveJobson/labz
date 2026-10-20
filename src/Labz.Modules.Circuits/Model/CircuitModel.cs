@@ -158,7 +158,6 @@ public sealed class DiodeComponent : CircuitComponent
             ["IS"] = new(Model.SaturationCurrent, Dimension.Current),
             ["N"] = Quantity.Of(Model.EmissionCoefficient, KnownUnits.Dimensionless),
             ["RS"] = Quantity.Of(Model.SeriesResistance, KnownUnits.Ohm),
-            ["BV"] = Quantity.Of(Model.BreakdownVoltage, KnownUnits.Volt),
         };
     }
 

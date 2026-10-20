@@ -112,6 +112,11 @@ public sealed class DcSolver
         }
 
         var solution = BuildSolution(topology, solved, ledsOn, componentIds, energy);
+        if (!solution.PowerBalanceOk)
+        {
+            throw new DcSolverConvergenceException(Strings.PowerBalance(Join(componentIds)), componentIds);
+        }
+
         progress?.Report(1);
         return solution;
     }

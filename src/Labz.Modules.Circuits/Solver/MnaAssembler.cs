@@ -33,13 +33,11 @@ internal static class MnaAssembler
     /// <summary>Conductance in parallel with every Shockley junction, in siemens.</summary>
     public const double ParallelConductance = 1e-12;
 
-    /// <summary>Siemens added once the junction is below -BreakdownVoltage.</summary>
-    private const double BreakdownConductance = 1;
-
-    private const double JunctionStepTolerance = 1e-8;
-
-    /// <summary>Fraction of the operating current. A fixed 1 nA band is larger than a picoamp junction.</summary>
-    private const double RelativeCurrentTolerance = 1e-4;
+    /// <summary>
+    /// Fraction of the junction current. Convergence compares the full model at the new voltage
+    /// with the linearized stamp, so a step into a steep region cannot hide behind the old slope.
+    /// </summary>
+    private const double RelativeCurrentTolerance = 1e-9;
 
     private const int NewtonLimit = 80;
 
@@ -127,18 +125,19 @@ internal static class MnaAssembler
             var converged = true;
             for (var i = 0; i < diodes.Length; i++)
             {
+                var oldVoltage = linearization[i];
                 var proposed = JunctionVoltage(topology, solved, diodes[i]);
                 var nVt = diodes[i].Model.EmissionCoefficient * DiodePhysics.ThermalVoltage;
-                var step = Math.Abs(proposed - linearization[i]);
-                EvaluateShockley(diodes[i].Model, linearization[i], out var linearizedCurrent, out var conductance);
-                // Series reverse diodes chatter by microvolts on a gmin-scale Jacobian.
-                // Compare that current step with the operating current. A fixed 1 nA band
-                // accepts a wrong split when the junction itself is only picoamps.
-                var currentChange = step * (conductance + gmin);
-                var currentScale = Math.Max(
-                    Math.Abs(linearizedCurrent + (gmin * linearization[i])),
-                    diodes[i].Model.SaturationCurrent);
-                if (step > JunctionStepTolerance && currentChange > RelativeCurrentTolerance * currentScale)
+                EvaluateShockley(diodes[i].Model, oldVoltage, out var currentAtOld, out var conductance);
+                EvaluateShockley(diodes[i].Model, proposed, out var currentAtNew, out _);
+                // Stamp current at the solved voltage, versus the Shockley current there.
+                // step*(g+gmin) only sees the old slope and accepts a jump into the exponential.
+                var predicted = currentAtOld + (conductance * (proposed - oldVoltage)) + (gmin * proposed);
+                var actual = currentAtNew + (gmin * proposed);
+                var mismatch = Math.Abs(actual - predicted);
+                var scale = Math.Max(Math.Abs(actual), Math.Abs(predicted));
+                scale = Math.Max(scale, diodes[i].Model.SaturationCurrent);
+                if (mismatch > RelativeCurrentTolerance * scale)
                 {
                     converged = false;
                 }
@@ -320,11 +319,6 @@ internal static class MnaAssembler
         var exponential = Math.Exp(argument);
         current = model.SaturationCurrent * (exponential - 1);
         conductance = Math.Max(0, model.SaturationCurrent * exponential / nVt);
-        if (junctionVoltage < -model.BreakdownVoltage)
-        {
-            current += BreakdownConductance * (junctionVoltage + model.BreakdownVoltage);
-            conductance += BreakdownConductance;
-        }
     }
 
     /// <summary>

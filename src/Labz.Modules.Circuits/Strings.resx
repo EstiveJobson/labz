@@ -27,6 +27,9 @@
   <data name="NoConvergence" xml:space="preserve">
     <value>O solver de corrente contínua não convergiu. Componentes: {0}.</value>
   </data>
+  <data name="PowerBalance" xml:space="preserve">
+    <value>O balanço de potência não fechou. Componentes: {0}.</value>
+  </data>
   <data name="PowerRatingOk" xml:space="preserve">
     <value>OK</value>
   </data>
