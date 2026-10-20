@@ -81,7 +81,7 @@ internal static class Strings
 
     public static string Roff() => Get("Roff");
 
-    public static string ChargeEfficiency() => Get("ChargeEfficiency");
+    public static string ChargeEfficiencyName() => Get("ChargeEfficiencyName");
 
     public static string LoadHoursPerDay() => Get("LoadHoursPerDay");
 

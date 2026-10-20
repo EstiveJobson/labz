@@ -84,7 +84,9 @@ public class QaFixTests
     {
         var session = Blank();
         var act = () => session.SetUsageHours("LOAD", 30);
-        act.Should().Throw<ArgumentOutOfRangeException>().WithMessage("*entre 0 e 24*");
+        var error = act.Should().Throw<ArgumentOutOfRangeException>().Which;
+        error.Message.Should().Be("As horas por dia devem ficar entre 0 e 24.");
+        error.Message.Should().NotContain("Parameter");
     }
 
     [Fact]

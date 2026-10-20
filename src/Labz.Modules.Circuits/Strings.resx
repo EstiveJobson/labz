@@ -114,7 +114,7 @@
   <data name="Roff" xml:space="preserve">
     <value>A resistência em aberto (Roff)</value>
   </data>
-  <data name="ChargeEfficiency" xml:space="preserve">
+  <data name="ChargeEfficiencyName" xml:space="preserve">
     <value>A eficiência de carga</value>
   </data>
   <data name="LoadHoursPerDay" xml:space="preserve">

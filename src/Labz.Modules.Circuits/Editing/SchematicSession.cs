@@ -384,7 +384,7 @@ public sealed class SchematicSession
     {
         if (!double.IsFinite(hours) || hours is < 0 or > 24)
         {
-            throw new ArgumentOutOfRangeException(nameof(hours), Strings.HoursInvalid());
+            ParameterValidation.ThrowOutOfRange(Strings.HoursInvalid());
         }
 
         Edit(EditKind.Usage, true, $"usage {target}", state =>
