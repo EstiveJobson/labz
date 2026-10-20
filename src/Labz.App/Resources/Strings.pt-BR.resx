@@ -52,7 +52,7 @@
     <value>Apagar</value>
   </data>
   <data name="PlaceHint" xml:space="preserve">
-    <value>Clique no canvas para colocar {0}.</value>
+    <value>Clique no esquema para colocar {0}.</value>
   </data>
   <data name="WireHint" xml:space="preserve">
     <value>Clique em outro pino, ou num fio, para ligar.</value>
@@ -67,10 +67,10 @@
     <value>Aberta</value>
   </data>
   <data name="SchottkyPreset" xml:space="preserve">
-    <value>Preset Schottky</value>
+    <value>Predefinição Schottky</value>
   </data>
   <data name="StandardDiodePreset" xml:space="preserve">
-    <value>Preset 1N4148</value>
+    <value>Predefinição 1N4148</value>
   </data>
   <data name="NewProjectName" xml:space="preserve">
     <value>Sem título</value>
@@ -158,5 +158,8 @@
   </data>
   <data name="NoRecentProjects" xml:space="preserve">
     <value>Nenhum projeto recente.</value>
+  </data>
+  <data name="SaveFailed" xml:space="preserve">
+    <value>Não foi possível salvar o projeto.</value>
   </data>
 </root>

@@ -71,9 +71,64 @@ public class WorkspaceViewModelTests
         main.PulseAutosave().Should().BeFalse();
     }
 
+    [Fact]
+    public void Focused_edits_are_committed_before_save_and_close()
+    {
+        var dialogs = new FakeDialogs { ConfirmResult = false };
+        var root = Path.Combine(Path.GetTempPath(), "labz-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        var main = new MainViewModel(
+            SchematicSession.CreateBlank("Teste", DateTimeOffset.UnixEpoch),
+            new DirectMainThread(),
+            dialogs,
+            Path.Combine(root, "recent.json"),
+            Path.Combine(root, "settings.json"),
+            TimeProvider.System);
+        var id = main.Session.Place("resistor", 0, 0);
+        main.CommitFocusedEdits = () => main.Session.TrySetParam(id, "resistance", "10 Ω", out _);
+        main.ConfirmClose().Should().BeFalse();
+        main.IsDirty.Should().BeTrue();
+        main.Session.State.Find(id)!.Params["resistance"].Should().Be("10 Ω");
+
+        var folder = Path.Combine(root, "projeto");
+        dialogs.Folders.Enqueue(folder);
+        dialogs.ConfirmResult = true;
+        main.Save();
+        File.ReadAllText(Path.Combine(folder, ProjectStore.FileName)).Should().Contain("10 Ω");
+    }
+
+    [Fact]
+    public void Unsaved_work_autosaves_into_the_recovery_folder_and_io_errors_are_shown()
+    {
+        var clock = new FakeClock(DateTimeOffset.Parse("2026-10-18T12:00:00Z"));
+        var dialogs = new FakeDialogs();
+        var root = Path.Combine(Path.GetTempPath(), "labz-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        var main = new MainViewModel(
+            SchematicSession.CreateBlank("Teste", clock.Now),
+            new DirectMainThread(),
+            dialogs,
+            Path.Combine(root, "recent.json"),
+            Path.Combine(root, "settings.json"),
+            clock);
+        main.RecoveryDirectory = Path.Combine(root, "recovery");
+        main.Session.Place("resistor", 0, 0);
+        clock.Now = clock.Now.AddMinutes(2);
+        main.PulseAutosave().Should().BeTrue();
+        SnapshotStore.List(main.RecoveryDirectory).Should().ContainSingle();
+
+        var blocker = Path.Combine(root, "not-a-folder");
+        File.WriteAllText(blocker, "x");
+        dialogs.Folders.Enqueue(blocker);
+        main.Save();
+        dialogs.Alerts.Should().Contain("Não foi possível salvar o projeto.");
+    }
+
     private sealed class FakeDialogs : IUserDialogs
     {
         public Queue<string?> Folders { get; } = new();
+
+        public List<string> Alerts { get; } = [];
 
         public bool ConfirmResult { get; set; } = true;
 
@@ -81,9 +136,7 @@ public class WorkspaceViewModelTests
 
         public string? ChooseFolder(string title) => Folders.Count == 0 ? null : Folders.Dequeue();
 
-        public void Alert(string message)
-        {
-        }
+        public void Alert(string message) => Alerts.Add(message);
     }
 
     private sealed class FakeClock(DateTimeOffset now) : TimeProvider

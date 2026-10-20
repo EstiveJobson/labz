@@ -39,7 +39,7 @@
             <TextBlock Text="{Binding HoursError}" Foreground="#B42318" Margin="0,4,0,0" />
         </StackPanel>
 
-        <UniformGrid DockPanel.Dock="Top" Columns="4" Margin="0,0,0,12">
+        <UniformGrid DockPanel.Dock="Top" Columns="3" Margin="0,0,0,12">
             <Border BorderBrush="#E4E7EB" BorderThickness="1" Margin="0,0,8,0" Padding="12" Background="White">
                 <StackPanel>
                     <TextBlock Text="{Binding Cards[0].Title}" Foreground="#52606D" />
@@ -52,6 +52,8 @@
                 <StackPanel>
                     <TextBlock Text="{Binding Cards[1].Title}" Foreground="#52606D" />
                     <TextBlock Text="{Binding Cards[1].Text}" FontSize="20" FontWeight="SemiBold" Margin="0,4,0,0" ToolTip="{Binding Cards[1].Trace}" />
+                    <TextBlock Text="{Binding PeakSunHoursLabel}" Margin="0,8,0,0" />
+                    <TextBox Text="{Binding PeakSunHours, UpdateSourceTrigger=LostFocus}" IsEnabled="{Binding CanEditPeakSun}" Margin="0,4,0,0" />
                 </StackPanel>
             </Border>
             <Border BorderBrush="#E4E7EB" BorderThickness="1" Margin="0,0,8,0" Padding="12" Background="White">
@@ -64,8 +66,12 @@
                 <StackPanel>
                     <TextBlock Text="{Binding Cards[3].Title}" Foreground="#52606D" />
                     <TextBlock Text="{Binding Cards[3].Text}" FontSize="20" FontWeight="SemiBold" Margin="0,4,0,0" ToolTip="{Binding Cards[3].Trace}" />
-                    <TextBlock Text="{Binding PeakSunHoursLabel}" Margin="0,8,0,0" />
-                    <TextBox Text="{Binding PeakSunHours, UpdateSourceTrigger=LostFocus}" IsEnabled="{Binding CanEditPeakSun}" Margin="0,4,0,0" />
+                </StackPanel>
+            </Border>
+            <Border BorderBrush="#E4E7EB" BorderThickness="1" Margin="8,8,0,0" Padding="12" Background="White">
+                <StackPanel>
+                    <TextBlock Text="{Binding Cards[4].Title}" Foreground="#52606D" />
+                    <TextBlock Text="{Binding Cards[4].Text}" FontSize="20" FontWeight="SemiBold" Margin="0,4,0,0" ToolTip="{Binding Cards[4].Trace}" />
                 </StackPanel>
             </Border>
         </UniformGrid>
@@ -74,8 +80,20 @@
             <DataGrid.Columns>
                 <DataGridTextColumn Header="{Binding ColumnId, Source={x:Reference resultsRoot}}" Binding="{Binding Id}" />
                 <DataGridTextColumn Header="{Binding ColumnType, Source={x:Reference resultsRoot}}" Binding="{Binding TypeName}" />
-                <DataGridTextColumn Header="{Binding ColumnVoltage, Source={x:Reference resultsRoot}}" Binding="{Binding Voltage}" />
-                <DataGridTextColumn Header="{Binding ColumnCurrent, Source={x:Reference resultsRoot}}" Binding="{Binding Current}" />
+                <DataGridTemplateColumn Header="{Binding ColumnVoltage, Source={x:Reference resultsRoot}}">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Voltage}" ToolTip="{Binding VoltageTrace}" Margin="4,2" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="{Binding ColumnCurrent, Source={x:Reference resultsRoot}}">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Current}" ToolTip="{Binding CurrentTrace}" Margin="4,2" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
                 <DataGridTemplateColumn Header="{Binding ColumnPower, Source={x:Reference resultsRoot}}">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
@@ -86,7 +104,7 @@
                 <DataGridTemplateColumn Header="{Binding ColumnRating, Source={x:Reference resultsRoot}}">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding RatingText}" Margin="4,2">
+                            <TextBlock Text="{Binding RatingText}" ToolTip="{Binding RatingTrace}" Margin="4,2">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
                                         <Style.Triggers>

@@ -237,4 +237,13 @@
   <data name="MissingValue" xml:space="preserve">
     <value>—</value>
   </data>
+  <data name="HoursInvalid" xml:space="preserve">
+    <value>Informe um número de horas maior ou igual a zero.</value>
+  </data>
+  <data name="CardConsumption" xml:space="preserve">
+    <value>Consumo</value>
+  </data>
+  <data name="CardChargeEnergy" xml:space="preserve">
+    <value>Carga</value>
+  </data>
 </root>

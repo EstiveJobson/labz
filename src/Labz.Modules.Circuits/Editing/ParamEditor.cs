@@ -54,7 +54,7 @@ public static class ParamEditor
             var quantity = QuantityParser.Parse(text, parameter.Dimension);
             if (!IsAccepted(type, name, quantity.Value))
             {
-                error = ConstraintMessage(type, name);
+                error = ConstraintMessage(type, name, parameter.Label);
                 return false;
             }
 
@@ -93,7 +93,7 @@ public static class ParamEditor
         return true;
     }
 
-    private static string ConstraintMessage(string type, string name)
+    private static string ConstraintMessage(string type, string name, string label)
     {
         if (type == "battery" && name == "usableDepthOfDischarge")
         {
@@ -102,14 +102,14 @@ public static class ParamEditor
 
         if (name is "RS" or "Ron" or "Roff" or "seriesResistance" or "internalResistance" or "capacity" or "ratedPower" or "forwardCurrent")
         {
-            return Strings.NonNegativeFinite(name);
+            return Strings.NonNegativeFinite(label);
         }
 
         if (name is "voltage" or "openCircuitVoltage" or "nominalVoltage" or "initialVoltage" or "initialCurrent")
         {
-            return Strings.FiniteValue(name);
+            return Strings.FiniteValue(label);
         }
 
-        return Strings.PositiveFinite(name);
+        return Strings.PositiveFinite(label);
     }
 }

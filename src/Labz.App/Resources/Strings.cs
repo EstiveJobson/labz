@@ -107,6 +107,8 @@ public static class Strings
 
     public static string NoRecentProjects => Get(nameof(NoRecentProjects));
 
+    public static string SaveFailed => Get(nameof(SaveFailed));
+
     private static string Get(string name)
     {
         return ResourceManager.GetString(name, CultureInfo.CurrentUICulture)

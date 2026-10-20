@@ -6,6 +6,7 @@ public enum CircuitProblemKind
     FloatingNode,
     VoltageSourceShort,
     UnconnectedPin,
+    CalculationFailed,
 }
 
 public sealed record CircuitProblem(CircuitProblemKind Kind, string Message, IReadOnlyList<string> ComponentIds);

@@ -164,6 +164,12 @@ internal static class Strings
 
     public static string MissingValue => Get("MissingValue");
 
+    public static string HoursInvalid() => Get("HoursInvalid");
+
+    public static string CardConsumption => Get("CardConsumption");
+
+    public static string CardChargeEnergy => Get("CardChargeEnergy");
+
     private static string Get(string name)
     {
         return ResourceManager.GetString(name, CultureInfo.InvariantCulture)

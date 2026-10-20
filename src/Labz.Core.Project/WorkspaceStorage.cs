@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Labz.Core.Project;
 
@@ -101,15 +102,20 @@ public static class UserSettingsStore
 
         try
         {
-            var settings = JsonSerializer.Deserialize<UserSettings>(File.ReadAllText(path), ProjectJson.Options) ?? new UserSettings();
-            if (!UserSettings.TryAutosaveMinutes(settings.AutosaveIntervalMinutes, out _))
+            var root = JsonNode.Parse(File.ReadAllText(path)) as JsonObject;
+            var settings = new UserSettings();
+            if (root?["autosaveIntervalMinutes"] is JsonValue minutesValue
+                && minutesValue.TryGetValue<int>(out var minutes)
+                && UserSettings.TryAutosaveMinutes(minutes, out _))
             {
-                settings.AutosaveIntervalMinutes = UserSettings.DefaultAutosaveMinutes;
+                settings.AutosaveIntervalMinutes = minutes;
             }
 
-            if (!UserSettings.TrySignificantDigits(settings.SignificantDigits, out _))
+            if (root?["significantDigits"] is JsonValue digitsValue
+                && digitsValue.TryGetValue<int>(out var digits)
+                && UserSettings.TrySignificantDigits(digits, out _))
             {
-                settings.SignificantDigits = UserSettings.DefaultSignificantDigits;
+                settings.SignificantDigits = digits;
             }
 
             return settings;
@@ -179,8 +185,7 @@ public static class SnapshotStore
         }
 
         File.WriteAllText(path, ProjectJson.Serialize(document));
-        var files = Directory.GetFiles(history, "*.json").OrderBy(Path.GetFileName, StringComparer.Ordinal).ToArray();
-        foreach (var extra in files.Take(Math.Max(0, files.Length - Capacity)))
+        foreach (var extra in List(projectFolder).Take(Math.Max(0, List(projectFolder).Count - Capacity)))
         {
             File.Delete(extra);
         }
@@ -194,6 +199,23 @@ public static class SnapshotStore
             return [];
         }
 
-        return Directory.GetFiles(history, "*.json").OrderBy(Path.GetFileName, StringComparer.Ordinal).ToArray();
+        return Directory.GetFiles(history, "*.json")
+            .Select(path => (Path: path, Name: ParseName(path)))
+            .OrderBy(item => item.Name.Stamp, StringComparer.Ordinal)
+            .ThenBy(item => item.Name.Suffix)
+            .Select(item => item.Path)
+            .ToArray();
+    }
+
+    private static (string Stamp, int Suffix) ParseName(string path)
+    {
+        var file = Path.GetFileNameWithoutExtension(path);
+        var dash = file.LastIndexOf('-');
+        if (dash > 0 && int.TryParse(file[(dash + 1)..], System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var suffix))
+        {
+            return (file[..dash], suffix);
+        }
+
+        return (file, 0);
     }
 }

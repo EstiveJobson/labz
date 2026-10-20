@@ -20,6 +20,13 @@ public partial class MainWindow : Window
             }
         };
         timer.Start();
+        DataContextChanged += (_, _) =>
+        {
+            if (DataContext is MainViewModel viewModel)
+            {
+                viewModel.CommitFocusedEdits = CommitFocusedBindings;
+            }
+        };
         Closing += (_, args) =>
         {
             if (DataContext is MainViewModel viewModel && !viewModel.ConfirmClose())
@@ -67,6 +74,14 @@ public partial class MainWindow : Window
         {
             schematic.Redo();
             e.Handled = true;
+        }
+    }
+
+    private static void CommitFocusedBindings()
+    {
+        if (Keyboard.FocusedElement is TextBox textBox)
+        {
+            textBox.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
         }
     }
 }

@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace Labz.Core.Project;
 
 /// <summary>
@@ -21,7 +23,11 @@ public static class ProjectStore
         Directory.CreateDirectory(folder);
         Directory.CreateDirectory(Path.Combine(folder, ResultsDirectoryName));
         Directory.CreateDirectory(Path.Combine(folder, HistoryDirectoryName));
-        File.WriteAllText(ProjectPath(folder), ProjectJson.Serialize(document));
+        var target = ProjectPath(folder);
+        var temporary = target + ".tmp";
+        var encoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
+        File.WriteAllText(temporary, ProjectJson.Serialize(document), encoding);
+        File.Move(temporary, target, overwrite: true);
     }
 
     public static ProjectLoadResult Open(string folder)
@@ -35,7 +41,11 @@ public static class ProjectStore
 
         try
         {
-            return ProjectLoader.Load(File.ReadAllText(path));
+            return ProjectLoader.Load(DecodeUtf8(File.ReadAllBytes(path)));
+        }
+        catch (DecoderFallbackException)
+        {
+            return ProjectLoadResult.Invalid(Strings.NotUtf8());
         }
         catch (IOException)
         {
@@ -45,5 +55,16 @@ public static class ProjectStore
         {
             return ProjectLoadResult.Invalid(Strings.Unreadable());
         }
+    }
+
+    private static string DecodeUtf8(byte[] bytes)
+    {
+        var encoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
+        if (bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF)
+        {
+            return encoding.GetString(bytes, 3, bytes.Length - 3);
+        }
+
+        return encoding.GetString(bytes);
     }
 }

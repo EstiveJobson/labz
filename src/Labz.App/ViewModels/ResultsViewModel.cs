@@ -247,7 +247,7 @@ public sealed class ResultsViewModel : ObservableObject
             return false;
         }
 
-        if (!double.IsFinite(hours) || hours < 0)
+        if (!double.IsFinite(hours) || hours is < 0 or > 24)
         {
             HoursError = Strings.HoursInvalid;
             return false;

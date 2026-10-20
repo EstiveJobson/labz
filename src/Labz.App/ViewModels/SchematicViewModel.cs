@@ -263,6 +263,7 @@ public sealed class SchematicViewModel : ObservableObject
                 _pressY = y;
                 _startX = component.X;
                 _startY = component.Y;
+                Session.BeginDrag(hit.ComponentId);
             }
 
             return;
@@ -297,8 +298,7 @@ public sealed class SchematicViewModel : ObservableObject
         }
 
         _dragged = true;
-        component.X = GridSnap.Snap(_startX + (x - _pressX));
-        component.Y = GridSnap.Snap(_startY + (y - _pressY));
+        Session.PreviewDrag(_pressId, _startX + (x - _pressX), _startY + (y - _pressY));
         RebuildScene();
     }
 
@@ -318,17 +318,7 @@ public sealed class SchematicViewModel : ObservableObject
             return;
         }
 
-        var component = Session.State.Find(id);
-        if (component is null)
-        {
-            return;
-        }
-
-        var endX = component.X;
-        var endY = component.Y;
-        component.X = _startX;
-        component.Y = _startY;
-        Session.Move(id, endX, endY);
+        Session.CommitDrag(id);
         _dragged = false;
         RebuildScene();
         RefreshCommands();

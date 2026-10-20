@@ -34,6 +34,14 @@ internal static class Strings
 
     public static string DigitsRange() => Get("DigitsRange");
 
+    public static string NonFiniteNumber() => Get("NonFiniteNumber");
+
+    public static string RotationStep() => Get("RotationStep");
+
+    public static string UsageHours() => Get("UsageHours");
+
+    public static string NotUtf8() => Get("NotUtf8");
+
     private static string Get(string name)
     {
         return ResourceManager.GetString(name, CultureInfo.InvariantCulture)

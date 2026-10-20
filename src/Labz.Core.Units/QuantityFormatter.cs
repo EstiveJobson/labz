@@ -97,9 +97,9 @@ public static class QuantityFormatter
         {
             engineering = 12;
         }
-        else if (engineering < -15)
+        else if (engineering < -12)
         {
-            engineering = -15;
+            engineering = -12;
         }
 
         double rounded = 0;
@@ -123,7 +123,7 @@ public static class QuantityFormatter
                 continue;
             }
 
-            if (rounded is > 0 and < 1 && engineering > -15)
+            if (rounded is > 0 and < 1 && engineering > -12)
             {
                 engineering -= 3;
                 continue;

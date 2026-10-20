@@ -52,7 +52,7 @@ public static class ProjectLoader
         {
             parsed = JsonNode.Parse(json);
         }
-        catch (JsonException)
+        catch (Exception exception) when (exception is JsonException or ArgumentException)
         {
             return ProjectLoadResult.Invalid(Strings.InvalidFile());
         }
@@ -62,15 +62,27 @@ public static class ProjectLoader
             return ProjectLoadResult.Invalid(Strings.InvalidFile());
         }
 
-        if (!ProjectMigrationPipeline.TryReadVersion(root, out _))
+        ProjectMigrationResult migration;
+        try
+        {
+            if (!ProjectMigrationPipeline.TryReadVersion(root, out _))
+            {
+                return ProjectLoadResult.Invalid(Strings.InvalidFile());
+            }
+
+            migration = ProjectMigrationPipeline.Migrate(root);
+        }
+        catch (Exception exception) when (exception is JsonException or ArgumentException)
         {
             return ProjectLoadResult.Invalid(Strings.InvalidFile());
         }
 
-        var migration = ProjectMigrationPipeline.Migrate(root);
         if (migration.Status == ProjectMigrationStatus.Unknown || migration.Document is null)
         {
-            return ProjectLoadResult.Newer(Strings.NewerVersion());
+            ProjectMigrationPipeline.TryReadVersion(root, out var version);
+            return ProjectMigrationPipeline.IsVersionToken(version)
+                ? ProjectLoadResult.Newer(Strings.NewerVersion())
+                : ProjectLoadResult.Invalid(Strings.InvalidFile());
         }
 
         string canonical;
@@ -78,7 +90,7 @@ public static class ProjectLoader
         {
             canonical = migration.Document.ToJsonString();
         }
-        catch (JsonException)
+        catch (Exception exception) when (exception is JsonException or ArgumentException)
         {
             return ProjectLoadResult.Invalid(Strings.InvalidFile());
         }
@@ -105,7 +117,7 @@ public static class ProjectLoader
 
             return ProjectLoadResult.Success(model, migration.Status == ProjectMigrationStatus.Migrated);
         }
-        catch (JsonException)
+        catch (Exception exception) when (exception is JsonException or ArgumentException)
         {
             return ProjectLoadResult.Invalid(Strings.InvalidFile());
         }
@@ -122,6 +134,29 @@ internal static class ProjectStructure
             if (!components.TryAdd(component.Id, component))
             {
                 return Strings.DuplicateComponent(component.Id);
+            }
+        }
+
+        foreach (var component in document.Modules.Circuits.Components)
+        {
+            if (!double.IsFinite(component.Layout.X)
+                || !double.IsFinite(component.Layout.Y)
+                || !double.IsFinite(component.Layout.Rotation))
+            {
+                return Strings.NonFiniteNumber();
+            }
+
+            if (component.Layout.Rotation is not (0 or 90 or 180 or 270))
+            {
+                return Strings.RotationStep();
+            }
+        }
+
+        foreach (var profile in document.Modules.Circuits.UsageProfiles)
+        {
+            if (!double.IsFinite(profile.HoursPerDay) || profile.HoursPerDay is < 0 or > 24)
+            {
+                return Strings.UsageHours();
             }
         }
 

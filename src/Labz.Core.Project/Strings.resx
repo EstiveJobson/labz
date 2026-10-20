@@ -45,4 +45,16 @@
   <data name="DigitsRange" xml:space="preserve">
     <value>Os algarismos significativos devem ficar entre 1 e 8.</value>
   </data>
+  <data name="NonFiniteNumber" xml:space="preserve">
+    <value>O arquivo do projeto contém um número que não é finito.</value>
+  </data>
+  <data name="RotationStep" xml:space="preserve">
+    <value>A rotação de um componente deve ser 0, 90, 180 ou 270 graus.</value>
+  </data>
+  <data name="UsageHours" xml:space="preserve">
+    <value>As horas por dia devem ser um número entre 0 e 24.</value>
+  </data>
+  <data name="NotUtf8" xml:space="preserve">
+    <value>O arquivo do projeto não está em UTF-8.</value>
+  </data>
 </root>

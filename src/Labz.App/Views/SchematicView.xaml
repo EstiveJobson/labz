@@ -77,10 +77,34 @@
                         <GridView>
                             <GridViewColumn Header="{Binding Results.ColumnId, Source={x:Reference schematicRoot}}" DisplayMemberBinding="{Binding Id}" Width="70" />
                             <GridViewColumn Header="{Binding Results.ColumnType, Source={x:Reference schematicRoot}}" DisplayMemberBinding="{Binding TypeName}" Width="120" />
-                            <GridViewColumn Header="{Binding Results.ColumnVoltage, Source={x:Reference schematicRoot}}" DisplayMemberBinding="{Binding Voltage}" Width="90" />
-                            <GridViewColumn Header="{Binding Results.ColumnCurrent, Source={x:Reference schematicRoot}}" DisplayMemberBinding="{Binding Current}" Width="90" />
-                            <GridViewColumn Header="{Binding Results.ColumnPower, Source={x:Reference schematicRoot}}" DisplayMemberBinding="{Binding Power}" Width="90" />
-                            <GridViewColumn Header="{Binding Results.ColumnRating, Source={x:Reference schematicRoot}}" DisplayMemberBinding="{Binding RatingText}" Width="120" />
+                            <GridViewColumn Header="{Binding Results.ColumnVoltage, Source={x:Reference schematicRoot}}" Width="90">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Voltage}" ToolTip="{Binding VoltageTrace}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="{Binding Results.ColumnCurrent, Source={x:Reference schematicRoot}}" Width="90">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Current}" ToolTip="{Binding CurrentTrace}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="{Binding Results.ColumnPower, Source={x:Reference schematicRoot}}" Width="90">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Power}" ToolTip="{Binding PowerTrace}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="{Binding Results.ColumnRating, Source={x:Reference schematicRoot}}" Width="120">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding RatingText}" ToolTip="{Binding RatingTrace}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
                         </GridView>
                     </ListView.View>
                 </ListView>

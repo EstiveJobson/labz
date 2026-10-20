@@ -7,6 +7,9 @@ public sealed class SchematicSession
 {
     private readonly UndoStack _undo = new();
     private readonly TimeProvider _clock;
+    private string? _dragId;
+    private double _dragStartX;
+    private double _dragStartY;
 
     private SchematicSession(ProjectDocument document, TimeProvider clock)
     {
@@ -165,6 +168,52 @@ public sealed class SchematicSession
             component.X = GridSnap.Snap(x);
             component.Y = GridSnap.Snap(y);
         });
+    }
+
+    public void BeginDrag(string id)
+    {
+        var component = State.Find(id) ?? throw new ArgumentException(Strings.UnknownComponent("?", id), nameof(id));
+        _dragId = id;
+        _dragStartX = component.X;
+        _dragStartY = component.Y;
+    }
+
+    public void PreviewDrag(string id, double x, double y)
+    {
+        if (_dragId != id)
+        {
+            return;
+        }
+
+        var component = State.Find(id);
+        if (component is null)
+        {
+            return;
+        }
+
+        component.X = GridSnap.Snap(x);
+        component.Y = GridSnap.Snap(y);
+    }
+
+    public void CommitDrag(string id)
+    {
+        if (_dragId != id)
+        {
+            return;
+        }
+
+        var component = State.Find(id);
+        _dragId = null;
+        if (component is null)
+        {
+            return;
+        }
+
+        var endX = component.X;
+        var endY = component.Y;
+        component.X = _dragStartX;
+        component.Y = _dragStartY;
+        Move(id, endX, endY);
     }
 
     public void Rotate(string id)
@@ -333,9 +382,9 @@ public sealed class SchematicSession
 
     public void SetUsageHours(string target, double hours)
     {
-        if (!double.IsFinite(hours) || hours < 0)
+        if (!double.IsFinite(hours) || hours is < 0 or > 24)
         {
-            throw new ArgumentOutOfRangeException(nameof(hours), Strings.NonNegativeFinite(nameof(hours)));
+            throw new ArgumentOutOfRangeException(nameof(hours), Strings.HoursInvalid());
         }
 
         Edit(EditKind.Usage, true, $"usage {target}", state =>

@@ -75,6 +75,10 @@ public sealed class MainViewModel : ObservableObject, IProjectActions
 
     public string? Folder { get; private set; }
 
+    public string? RecoveryDirectory { get; set; }
+
+    public Action? CommitFocusedEdits { get; set; }
+
     public HomeViewModel Home { get; }
 
     public SettingsViewModel Preferences { get; }
@@ -131,6 +135,7 @@ public sealed class MainViewModel : ObservableObject, IProjectActions
 
     public void NewProject()
     {
+        CommitFocused();
         if (!ConfirmDiscard())
         {
             return;
@@ -141,6 +146,7 @@ public sealed class MainViewModel : ObservableObject, IProjectActions
 
     public void OpenRef1()
     {
+        CommitFocused();
         if (!ConfirmDiscard())
         {
             return;
@@ -155,6 +161,7 @@ public sealed class MainViewModel : ObservableObject, IProjectActions
 
     public void OpenProject()
     {
+        CommitFocused();
         var folder = _dialogs.ChooseFolder(Strings.ChooseFolder);
         if (folder is not null)
         {
@@ -164,6 +171,7 @@ public sealed class MainViewModel : ObservableObject, IProjectActions
 
     public void OpenRecent(string folder)
     {
+        CommitFocused();
         if (!ConfirmDiscard())
         {
             return;
@@ -183,6 +191,7 @@ public sealed class MainViewModel : ObservableObject, IProjectActions
 
     public void Save()
     {
+        CommitFocused();
         if (Folder is null)
         {
             SaveAs();
@@ -194,6 +203,7 @@ public sealed class MainViewModel : ObservableObject, IProjectActions
 
     public void SaveAs()
     {
+        CommitFocused();
         var folder = _dialogs.ChooseFolder(Strings.ChooseFolder);
         if (folder is null)
         {
@@ -203,18 +213,37 @@ public sealed class MainViewModel : ObservableObject, IProjectActions
         Write(folder);
     }
 
-    public bool ConfirmClose() => ConfirmDiscard();
+    public bool ConfirmClose()
+    {
+        CommitFocused();
+        return ConfirmDiscard();
+    }
 
     public bool PulseAutosave()
     {
-        if (Folder is null || !IsDirty || !_autosave.IsDue())
+        if (!IsDirty || !_autosave.IsDue())
         {
             return false;
         }
 
-        SnapshotStore.Write(Folder, Session.ToDocument(), _clock.GetUtcNow());
-        _autosave.MarkSaved();
-        return true;
+        var folder = Folder ?? RecoveryDirectory;
+        if (folder is null)
+        {
+            return false;
+        }
+
+        try
+        {
+            Directory.CreateDirectory(folder);
+            SnapshotStore.Write(folder, Session.ToDocument(), _clock.GetUtcNow());
+            _autosave.MarkSaved();
+            return true;
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            _dialogs.Alert(Strings.SaveFailed);
+            return false;
+        }
     }
 
     public IReadOnlyList<RecentProject> LoadRecent() => RecentProjectStore.Load(_recentPath);
@@ -223,7 +252,16 @@ public sealed class MainViewModel : ObservableObject, IProjectActions
 
     private void Write(string folder)
     {
-        ProjectStore.Save(folder, Session.ToDocument());
+        try
+        {
+            ProjectStore.Save(folder, Session.ToDocument());
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            _dialogs.Alert(Strings.SaveFailed);
+            return;
+        }
+
         Folder = folder;
         IsDirty = false;
         _autosave.MarkSaved();
@@ -231,6 +269,8 @@ public sealed class MainViewModel : ObservableObject, IProjectActions
         Home.Reload();
         OnPropertyChanged(nameof(WindowTitle));
     }
+
+    private void CommitFocused() => CommitFocusedEdits?.Invoke();
 
     private void Remember()
     {

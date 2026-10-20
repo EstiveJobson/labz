@@ -42,7 +42,13 @@ public static class ProjectMigrationPipeline
 {
     private static readonly IProjectMigration[] Steps = [new LegacyZeroToCurrentMigration()];
 
+    private static readonly System.Text.RegularExpressions.Regex VersionToken = new(
+        "^[0-9]+(\\.[0-9]+)?$",
+        System.Text.RegularExpressions.RegexOptions.CultureInvariant | System.Text.RegularExpressions.RegexOptions.Compiled);
+
     public static IReadOnlyList<IProjectMigration> Migrations => Steps;
+
+    public static bool IsVersionToken(string version) => VersionToken.IsMatch(version);
 
     public static ProjectMigrationResult Migrate(JsonObject document)
     {

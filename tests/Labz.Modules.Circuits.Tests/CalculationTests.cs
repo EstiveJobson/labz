@@ -108,7 +108,8 @@ public class CalculationTests
         projection.Rows.Should().Contain(row => row.Id == "R1" && row.PowerTrace.Contains("R1.P · P=I²R") && row.PowerTrace.Contains("ohm.P=I2R"));
         projection.BalanceText.Should().Be("balanço de potência ✓");
         projection.ChargeEfficiency.Should().Be("Eficiência de carga: 1,0");
-        projection.Cards.Single(card => card.Title == "Wh/dia").Trace.Should().Contain("energy.Wh_day");
+        projection.Cards.Single(card => card.Title == "Consumo").Trace.Should().Contain("energy.Wh_day");
+        projection.Cards.Single(card => card.Title == "Consumo").Text.Should().Contain("Wh/dia");
         projection.Cards.Single(card => card.Title == "Autonomia").Text.Should().Contain("h").And.Contain("d");
         projection.SignConvention.Should().Contain("absorve");
 

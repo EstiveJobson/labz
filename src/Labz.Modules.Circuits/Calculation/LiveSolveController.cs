@@ -111,17 +111,7 @@ public sealed class LiveSolveController : IDisposable
         {
             var state = new SchematicState();
             snapshot.Restore(state);
-            CircuitModel circuit;
-            try
-            {
-                circuit = CircuitMapper.ToCircuit(state);
-            }
-            catch (Exception exception) when (exception is InvalidOperationException or ArgumentException or QuantityFormatException)
-            {
-                PublishBlocked(generation, [new CircuitProblem(CircuitProblemKind.UnconnectedPin, exception.Message, [])]);
-                return Task.CompletedTask;
-            }
-
+            var circuit = CircuitMapper.ToCircuit(state);
             var problems = CircuitDiagnostics.Check(circuit);
             if (problems.Count > 0)
             {
@@ -178,11 +168,24 @@ public sealed class LiveSolveController : IDisposable
         }
         catch (CircuitSolverException exception)
         {
-            PublishBlocked(generation, [new CircuitProblem(CircuitProblemKind.VoltageSourceShort, exception.Message, exception.ComponentIds)]);
+            PublishBlocked(generation, [ProblemFor(exception)]);
+        }
+        catch (Exception exception)
+        {
+            PublishBlocked(generation, [ProblemFor(exception)]);
         }
 
         return Task.CompletedTask;
     }
+
+    private static CircuitProblem ProblemFor(Exception exception) => exception switch
+    {
+        MissingGroundException missing => new(CircuitProblemKind.MissingGround, missing.Message, missing.ComponentIds),
+        FloatingNodeException floating => new(CircuitProblemKind.FloatingNode, floating.Message, floating.ComponentIds),
+        VoltageSourceLoopException loop => new(CircuitProblemKind.VoltageSourceShort, loop.Message, loop.ComponentIds),
+        CircuitSolverException solver => new(CircuitProblemKind.CalculationFailed, solver.Message, solver.ComponentIds),
+        _ => new(CircuitProblemKind.CalculationFailed, exception.Message, []),
+    };
 
     private void PublishBlocked(int generation, IReadOnlyList<CircuitProblem> problems)
     {
