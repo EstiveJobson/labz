@@ -117,4 +117,46 @@
   <data name="FixSchematicMessage" xml:space="preserve">
     <value>Corrija os problemas do esquema para calcular.</value>
   </data>
+  <data name="NewProject" xml:space="preserve">
+    <value>Novo projeto</value>
+  </data>
+  <data name="OpenProject" xml:space="preserve">
+    <value>Abrir</value>
+  </data>
+  <data name="OpenRef1" xml:space="preserve">
+    <value>Abrir modelo REF-1</value>
+  </data>
+  <data name="NewFromIdea" xml:space="preserve">
+    <value>Novo projeto a partir de uma ideia</value>
+  </data>
+  <data name="IdeaHint" xml:space="preserve">
+    <value>Disponível quando o Assistente chegar</value>
+  </data>
+  <data name="RecentProjects" xml:space="preserve">
+    <value>Projetos recentes</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Salvar</value>
+  </data>
+  <data name="SaveAs" xml:space="preserve">
+    <value>Salvar como</value>
+  </data>
+  <data name="DiscardChanges" xml:space="preserve">
+    <value>Há alterações não salvas. Deseja descartá-las?</value>
+  </data>
+  <data name="ChooseFolder" xml:space="preserve">
+    <value>Escolha a pasta do projeto</value>
+  </data>
+  <data name="AutosaveLabel" xml:space="preserve">
+    <value>Salvamento automático (minutos)</value>
+  </data>
+  <data name="AutosaveHint" xml:space="preserve">
+    <value>De 1 a 60 minutos. O padrão é 2.</value>
+  </data>
+  <data name="SignificantDigitsLabel" xml:space="preserve">
+    <value>Algarismos significativos</value>
+  </data>
+  <data name="NoRecentProjects" xml:space="preserve">
+    <value>Nenhum projeto recente.</value>
+  </data>
 </root>

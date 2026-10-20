@@ -30,6 +30,10 @@ internal static class Strings
 
     public static string ConnectionShape(string netId) => Format("ConnectionShape", netId);
 
+    public static string AutosaveRange() => Get("AutosaveRange");
+
+    public static string DigitsRange() => Get("DigitsRange");
+
     private static string Get(string name)
     {
         return ResourceManager.GetString(name, CultureInfo.InvariantCulture)

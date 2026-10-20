@@ -14,5 +14,11 @@
         <DataTemplate DataType="{x:Type vm:ResultsViewModel}">
             <views:ResultsView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:HomeViewModel}">
+            <views:HomeView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
+            <views:SettingsView />
+        </DataTemplate>
     </Application.Resources>
 </Application>

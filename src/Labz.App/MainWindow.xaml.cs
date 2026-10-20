@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 using Labz.App.ViewModels;
 
 namespace Labz.App;
@@ -10,11 +11,34 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(15) };
+        timer.Tick += (_, _) =>
+        {
+            if (DataContext is MainViewModel viewModel)
+            {
+                viewModel.PulseAutosave();
+            }
+        };
+        timer.Start();
+        Closing += (_, args) =>
+        {
+            if (DataContext is MainViewModel viewModel && !viewModel.ConfirmClose())
+            {
+                args.Cancel = true;
+            }
+        };
     }
 
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.OriginalSource is TextBox || DataContext is not MainViewModel main || main.CurrentPage is not SchematicViewModel schematic)
+        if (DataContext is MainViewModel main && e.Key == Key.S && Keyboard.Modifiers == ModifierKeys.Control)
+        {
+            main.Save();
+            e.Handled = true;
+            return;
+        }
+
+        if (e.OriginalSource is TextBox || DataContext is not MainViewModel host || host.CurrentPage is not SchematicViewModel schematic)
         {
             return;
         }

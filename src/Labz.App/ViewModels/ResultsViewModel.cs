@@ -29,6 +29,10 @@ public sealed class ResultsViewModel : ObservableObject
         Rows = [];
         Cards = [];
         Problems = [];
+        foreach (var card in ResultProjection.Empty().Cards)
+        {
+            Cards.Add(card);
+        }
         CancelCommand = new RelayCommand(() => _calculator.Cancel(), () => _calculator.IsRunning);
         _calculator.Changed += Refresh;
         Session.Changed += affects =>

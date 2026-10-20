@@ -79,6 +79,34 @@ public static class Strings
 
     public static string FixSchematicMessage => Get(nameof(FixSchematicMessage));
 
+    public static string NewProject => Get(nameof(NewProject));
+
+    public static string OpenProject => Get(nameof(OpenProject));
+
+    public static string OpenRef1 => Get(nameof(OpenRef1));
+
+    public static string NewFromIdea => Get(nameof(NewFromIdea));
+
+    public static string IdeaHint => Get(nameof(IdeaHint));
+
+    public static string RecentProjects => Get(nameof(RecentProjects));
+
+    public static string Save => Get(nameof(Save));
+
+    public static string SaveAs => Get(nameof(SaveAs));
+
+    public static string DiscardChanges => Get(nameof(DiscardChanges));
+
+    public static string ChooseFolder => Get(nameof(ChooseFolder));
+
+    public static string AutosaveLabel => Get(nameof(AutosaveLabel));
+
+    public static string AutosaveHint => Get(nameof(AutosaveHint));
+
+    public static string SignificantDigitsLabel => Get(nameof(SignificantDigitsLabel));
+
+    public static string NoRecentProjects => Get(nameof(NoRecentProjects));
+
     private static string Get(string name)
     {
         return ResourceManager.GetString(name, CultureInfo.CurrentUICulture)
