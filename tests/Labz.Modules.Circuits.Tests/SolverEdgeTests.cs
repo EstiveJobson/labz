@@ -92,8 +92,8 @@ public class SolverEdgeTests
     [Fact]
     public void Invalid_component_values_use_portuguese_resource_text()
     {
-        var resistance = () => new ResistorComponent("R1", double.NaN);
-        resistance.Should().Throw<ArgumentOutOfRangeException>().WithMessage("*finito*");
+        var resistance = () => { _ = new ResistorComponent("R1", double.NaN); };
+        ExpectPortugueseRange(resistance, "A resistência deve ser um número finito maior que zero.");
 
         var pin = () => new CircuitBuilder()
             .Add(new ResistorComponent("R1", 10))
@@ -195,8 +195,8 @@ public class SolverEdgeTests
     [Fact]
     public void Steep_diode_matches_the_full_model_current()
     {
-        // Saturation of 1e-20 A clamps near 2 mA. The old slope test accepts that
-        // point while the model current and the resistor current still disagree.
+        // Is = 1e-20 A at 2 V through 1 Ω. The model current has to match the resistor
+        // current; a slope-only Newton test used to accept them while they disagreed.
         var model = new DiodeModel(1e-20, 1, 0);
         var circuit = new CircuitBuilder()
             .Add(new DcVoltageSourceComponent("V1", 2))
@@ -217,13 +217,86 @@ public class SolverEdgeTests
         solution.PowerBalanceOk.Should().BeTrue();
     }
 
-    [Fact]
-    public void Unbalanced_diode_solution_is_rejected()
+    [Theory]
+    [InlineData(1d)]
+    [InlineData(-1d)]
+    public void Unbalanced_diode_solution_is_rejected(double injectedWatts)
     {
         // A divider balances. The watt is injected through the test hook, not by a bad circuit.
-        var solver = new DcSolver { PowerBalanceInjectionWatts = 1 };
+        // Both signs: the check compares the absolute imbalance, so -1 W is rejected too.
+        var solver = new DcSolver { PowerBalanceInjectionWatts = injectedWatts };
         var act = () => solver.Solve(Divider());
         act.Should().Throw<DcSolverConvergenceException>().WithMessage("*balanço de potência*");
+    }
+
+    [Theory]
+    [InlineData(1.1)]
+    [InlineData(-1.1)]
+    public void Kilovolt_imbalance_above_the_voltage_term_is_rejected(double factor)
+    {
+        // 10 kV across 10 MΩ. sum|V| = 20 kV and sum|P| = 20 W.
+        // limit = max(1e-9, max(1e-12 * 20, 1e-12 * 20_000)) = 2e-8 W.
+        const double limitWatts = 2e-8;
+        var solver = new DcSolver { PowerBalanceInjectionWatts = factor * limitWatts };
+        var act = () => solver.Solve(KilovoltResistor());
+        act.Should().Throw<DcSolverConvergenceException>().WithMessage("*balanço de potência*");
+    }
+
+    [Theory]
+    [InlineData(0.9)]
+    [InlineData(-0.9)]
+    public void Kilovolt_imbalance_inside_the_voltage_term_is_accepted(double factor)
+    {
+        const double limitWatts = 2e-8;
+        var solver = new DcSolver { PowerBalanceInjectionWatts = factor * limitWatts };
+        var solution = solver.Solve(KilovoltResistor());
+        solution.PowerBalanceOk.Should().BeTrue();
+        solution.Get("balance.P").Value.Should().BeApproximately(factor * limitWatts, 1e-18);
+    }
+
+    [Theory]
+    [InlineData(5d)]
+    [InlineData(12d)]
+    [InlineData(50d)]
+    public void Saturation_of_1e_minus_20_through_1_kilohm_converges(double volts)
+    {
+        var model = new DiodeModel(1e-20, 1, 0);
+        var solution = _solver.Solve(SeriesDiode(model, volts, 1000));
+        solution.PowerBalanceOk.Should().BeTrue();
+        var current = solution.Get("D1.I").Value;
+        var resistor = solution.Get("R1.I").Value;
+        var scale = Math.Max(Math.Abs(current), model.SaturationCurrent);
+        Math.Abs(current - resistor).Should().BeLessThanOrEqualTo(1e-6 * scale);
+        current.Should().BePositive();
+    }
+
+    [Fact]
+    public void Microamp_junction_uses_the_relative_newton_criterion()
+    {
+        // About 1 µA at a fraction of a volt. 1e-6 relative is about 1 pA.
+        // The power cap is a fraction of a nanoamp, so the relative term decides.
+        var model = new DiodeModel(1e-14, 1, 0);
+        var solution = _solver.Solve(SeriesDiode(model, 1.5, 1_000_000));
+        var current = solution.Get("D1.I").Value;
+        var voltage = Math.Abs(solution.Get("D1.V").Value);
+        current.Should().BeInRange(5e-7, 5e-6);
+
+        var tolerance = MnaAssembler.NewtonCurrentTolerance(current, current, model.SaturationCurrent, voltage);
+        var scale = Math.Max(current, model.SaturationCurrent);
+        var relative = (1e-6 * scale) + 1e-15;
+        tolerance.Should().BeApproximately(relative, relative * 1e-9);
+
+        var powerCap = 0.2 * DcSolver.PowerBalanceLimit(voltage * current, voltage) / Math.Max(voltage, 1e-3);
+        tolerance.Should().BeLessThan(powerCap);
+    }
+
+    [Fact]
+    public void Ampere_junction_uses_the_power_cap()
+    {
+        // 1 A at 1 V. The power cap is 0.2 * 1e-9 W / 1 V = 2e-10 A.
+        var tolerance = MnaAssembler.NewtonCurrentTolerance(1, 1, 1e-12, 1);
+        tolerance.Should().BeApproximately(2e-10, 1e-18);
+        tolerance.Should().BeLessThan(1e-6);
     }
 
     [Fact]
@@ -249,27 +322,59 @@ public class SolverEdgeTests
     [InlineData(3)]
     public void Series_diodes_at_minus_10_kilovolts_share_the_resistor_current(int count)
     {
+        // Relative 1e-3. At a few nanoamps, 1 nA absolute was tens of percent.
+        // The worst diode here is about 2e-4 off the resistor current.
+        // Known limit: three diodes at -100 kV do not close the power balance.
         var solution = _solver.Solve(SeriesDiodes(count, -10_000, 1000));
         solution.PowerBalanceOk.Should().BeTrue();
         var resistor = solution.Get("R1.I").Value;
         for (var index = 1; index <= count; index++)
         {
-            solution.Get($"D{index}.I").Value.Should().BeApproximately(resistor, 1e-9);
+            var diode = solution.Get($"D{index}.I").Value;
+            var scale = Math.Max(Math.Abs(resistor), Math.Abs(diode));
+            Math.Abs(diode - resistor).Should().BeLessThanOrEqualTo(1e-3 * scale);
         }
     }
 
     [Fact]
     public void With_expression_rejects_a_negative_saturation_current()
     {
-        var saturation = () => DiodePresets.In4148 with { SaturationCurrent = -1 };
-        saturation.Should().Throw<ArgumentOutOfRangeException>().WithMessage("*corrente de saturação (IS)*");
+        var saturation = () => { _ = DiodePresets.In4148 with { SaturationCurrent = -1 }; };
+        ExpectPortugueseRange(saturation, "A corrente de saturação (IS) deve ser um número finito maior que zero.");
 
-        var emission = () => DiodePresets.In4148 with { EmissionCoefficient = 0 };
-        emission.Should().Throw<ArgumentOutOfRangeException>().WithMessage("*coeficiente de emissão (N)*");
+        var emission = () => { _ = DiodePresets.In4148 with { EmissionCoefficient = 0 }; };
+        ExpectPortugueseRange(emission, "O coeficiente de emissão (N) deve ser um número finito maior que zero.");
 
-        var series = () => DiodePresets.In4148 with { SeriesResistance = double.NaN };
-        series.Should().Throw<ArgumentOutOfRangeException>().WithMessage("*resistência série (RS)*");
+        var series = () => { _ = DiodePresets.In4148 with { SeriesResistance = double.NaN }; };
+        ExpectPortugueseRange(series, "A resistência série (RS) deve ser um número finito maior ou igual a zero.");
     }
+
+    [Theory]
+    [MemberData(nameof(PortugueseRangeMessages))]
+    public void Validation_messages_start_uppercase_without_a_parameter_suffix(Action act, string expected)
+    {
+        ExpectPortugueseRange(act, expected);
+    }
+
+    public static TheoryData<Action, string> PortugueseRangeMessages() => new()
+    {
+        { () => { _ = new ResistorComponent("R1", 100, 0); }, "A potência nominal deve ser um número finito maior que zero." },
+        { () => { _ = new CapacitorComponent("C1", 0); }, "A capacitância deve ser um número finito maior que zero." },
+        { () => { _ = new InductorComponent("L1", double.NaN); }, "A indutância deve ser um número finito maior que zero." },
+        { () => { _ = new LedComponent("D1", -1); }, "A tensão direta deve ser um número finito maior que zero." },
+        { () => { _ = new DcVoltageSourceComponent("V1", double.PositiveInfinity); }, "A tensão deve ser um número finito." },
+        { () => { _ = new SolarPanelComponent("PV1", double.NaN, 1); }, "A tensão de circuito aberto deve ser um número finito." },
+        { () => { _ = new SolarPanelComponent("PV1", 18, -1); }, "A resistência série deve ser um número finito maior ou igual a zero." },
+        { () => { _ = new BatteryComponent("B1", double.NaN, 0, 1, 0.5); }, "A tensão nominal deve ser um número finito." },
+        { () => { _ = new BatteryComponent("B1", 12, -1, 1, 0.5); }, "A resistência interna deve ser um número finito maior ou igual a zero." },
+        { () => { _ = new BatteryComponent("B1", 12, 0, -1, 0.5); }, "A capacidade deve ser um número finito maior ou igual a zero." },
+        { () => { _ = new BatteryComponent("B1", 12, 0, 1, 2); }, "A profundidade de descarga deve ser um número finito entre 0 e 1." },
+        { () => { _ = new SwitchComponent("S1", SwitchState.Open, ronOhms: -1); }, "A resistência em condução (Ron) deve ser um número finito maior ou igual a zero." },
+        { () => { _ = new SwitchComponent("S1", SwitchState.Open, roffOhms: double.NaN); }, "A resistência em aberto (Roff) deve ser um número finito maior ou igual a zero." },
+        { () => new EnergySettings(ChargeEfficiency: 0).EnsureValid(), "A eficiência de carga deve ser um número finito maior que zero." },
+        { () => new EnergySettings(LoadHoursPerDay: -1).EnsureValid(), "O tempo de uso por dia deve ser um número finito maior ou igual a zero." },
+        { () => new EnergySettings(PeakSunHours: double.NaN).EnsureValid(), "O tempo de sol de pico deve ser um número finito maior ou igual a zero." },
+    };
 
     [Theory]
     [InlineData(0d, 1d, 0d)]
@@ -340,10 +445,28 @@ public class SolverEdgeTests
 
     private static void CurrentsMatch(DcSolution solution, string diodeId)
     {
+        // Relative only. A 1 nA absolute floor accepts a large share of a nanoamp current.
         var resistor = solution.Get("R1.I").Value;
         var diode = solution.Get(diodeId + ".I").Value;
-        Math.Abs(diode - resistor).Should().BeLessThanOrEqualTo(Math.Max(1e-9, 1e-9 * Math.Abs(resistor)));
+        var scale = Math.Max(Math.Abs(resistor), Math.Abs(diode));
+        Math.Abs(diode - resistor).Should().BeLessThanOrEqualTo(1e-9 * scale);
     }
+
+    private static void ExpectPortugueseRange(Action act, string expected)
+    {
+        var error = act.Should().Throw<ArgumentOutOfRangeException>().Which;
+        error.Message.Should().Be(expected);
+        char.IsUpper(error.Message[0]).Should().BeTrue();
+        error.Message.Should().NotContain("Parameter");
+    }
+
+    private static CircuitModel KilovoltResistor() => new CircuitBuilder()
+        .Add(new DcVoltageSourceComponent("V1", 10_000))
+        .Add(new ResistorComponent("R1", 10_000_000))
+        .Add(new GroundComponent("GND"))
+        .Connect("N", ("V1", "+"), ("R1", "1"))
+        .Connect("0", ("V1", "-"), ("R1", "2"), ("GND", "g"))
+        .Build();
 
     private static CircuitModel SeriesDiode(DiodeModel model, double volts, double ohms) => new CircuitBuilder()
         .Add(new DcVoltageSourceComponent("V1", volts))

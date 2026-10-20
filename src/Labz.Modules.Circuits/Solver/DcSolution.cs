@@ -25,25 +25,19 @@ public sealed record EnergySettings(double? LoadHoursPerDay = null, double? Peak
 {
     public void EnsureValid()
     {
-        RequireNonNegative(LoadHoursPerDay, nameof(LoadHoursPerDay));
-        RequireNonNegative(PeakSunHours, nameof(PeakSunHours));
-        if (!double.IsFinite(ChargeEfficiency) || ChargeEfficiency <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(ChargeEfficiency), Strings.PositiveFinite(nameof(ChargeEfficiency)));
-        }
+        RequireNonNegative(LoadHoursPerDay, Strings.NonNegativeFinite(Strings.LoadHoursPerDay()));
+        RequireNonNegative(PeakSunHours, Strings.NonNegativeFinite(Strings.PeakSunHours()));
+        ParameterValidation.RequirePositive(ChargeEfficiency, Strings.PositiveFinite(Strings.ChargeEfficiency()));
     }
 
-    private static void RequireNonNegative(double? value, string name)
+    private static void RequireNonNegative(double? value, string message)
     {
         if (value is null)
         {
             return;
         }
 
-        if (!double.IsFinite(value.Value) || value.Value < 0)
-        {
-            throw new ArgumentOutOfRangeException(name, Strings.NonNegativeFinite(name));
-        }
+        ParameterValidation.RequireNonNegative(value.Value, message);
     }
 }
 

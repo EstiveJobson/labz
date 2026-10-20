@@ -55,6 +55,38 @@ internal static class Strings
 
     public static string DiodeSeriesResistance() => Get("DiodeSeriesResistance");
 
+    public static string Resistance() => Get("Resistance");
+
+    public static string PowerRating() => Get("PowerRating");
+
+    public static string Capacitance() => Get("Capacitance");
+
+    public static string Inductance() => Get("Inductance");
+
+    public static string ForwardVoltage() => Get("ForwardVoltage");
+
+    public static string Voltage() => Get("Voltage");
+
+    public static string OpenCircuitVoltage() => Get("OpenCircuitVoltage");
+
+    public static string SeriesResistance() => Get("SeriesResistance");
+
+    public static string NominalVoltage() => Get("NominalVoltage");
+
+    public static string InternalResistance() => Get("InternalResistance");
+
+    public static string Capacity() => Get("Capacity");
+
+    public static string Ron() => Get("Ron");
+
+    public static string Roff() => Get("Roff");
+
+    public static string ChargeEfficiency() => Get("ChargeEfficiency");
+
+    public static string LoadHoursPerDay() => Get("LoadHoursPerDay");
+
+    public static string PeakSunHours() => Get("PeakSunHours");
+
     public static string NonNegativeFinite(string name) => Format("NonNegativeFinite", name);
 
     public static string FiniteValue(string name) => Format("FiniteValue", name);

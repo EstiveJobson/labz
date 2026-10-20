@@ -42,6 +42,7 @@ public sealed class DcSolver
     /// because the cancellation residual grows with V·I. A kilovolt node leaves about
     /// 1e-13 A of current noise, so 1 pA times the voltage sum covers that few-nanowatt floor
     /// when the current itself is only nanoamps and 1e-12·sum|P| does not.
+    /// The 1 pA·sum|V| term is loose for picoamp circuits: the allowed imbalance can exceed the branch current.
     /// </summary>
     public static double PowerBalanceLimit(double sumAbsPower, double sumAbsVoltage) =>
         Math.Max(
