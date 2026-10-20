@@ -15,14 +15,15 @@ public static class ResultText
         }
 
         var magnitude = Math.Abs(result.Value);
-        var value = scale > 0 && magnitude <= scale * 1e-9 ? 0 : result.Value;
+        // 1e-14 relative to the largest result of this unit is solver noise.
+        var value = scale > 0 && magnitude <= scale * 1e-14 ? 0 : result.Value;
         return Display(QuantityFormatter.Format(Quantity.Of(value, unit), unit, significantDigits), result.Unit);
     }
 
     private static string Display(string formatted, string unit) => unit switch
     {
         "Wh/day" => formatted.Replace("Wh/day", "Wh/dia", StringComparison.Ordinal),
-        "d" => formatted.EndsWith(" d", StringComparison.Ordinal) ? formatted[..^2] + " dia" : formatted,
+        "d" => formatted.EndsWith(" d", StringComparison.Ordinal) ? formatted[..^2] + " dias" : formatted,
         _ => formatted,
     };
 
@@ -191,6 +192,16 @@ public sealed class ResultProjection
 
     private static EnergyCard Autonomy(DcSolution solution, int digits, IReadOnlyDictionary<string, double> scales)
     {
+        if (solution.Results.TryGet("energy.I_charge", out var charge) && charge is not null && charge.Value > 0)
+        {
+            return new EnergyCard
+            {
+                Title = Strings.CardAutonomy,
+                Text = Strings.NotApplicable,
+                Trace = ResultText.Trace(charge),
+            };
+        }
+
         var parts = new List<string>();
         string? trace = null;
         if (solution.Results.TryGet("energy.runtime.h", out var runtime) && runtime is not null)

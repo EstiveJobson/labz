@@ -124,6 +124,76 @@ public class WorkspaceViewModelTests
         dialogs.Alerts.Should().Contain("Não foi possível salvar o projeto.");
     }
 
+    [Fact]
+    public void Recovery_directory_is_under_local_app_data()
+    {
+        var main = new MainViewModel();
+        main.RecoveryDirectory.Should().Be(Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            Labz.App.Resources.Strings.AppTitle,
+            "recovery"));
+    }
+
+    [Fact]
+    public void Autosave_failure_backs_off_and_shows_one_banner()
+    {
+        var clock = new FakeClock(DateTimeOffset.Parse("2026-10-18T12:00:00Z"));
+        var dialogs = new FakeDialogs();
+        var root = Path.Combine(Path.GetTempPath(), "labz-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        var main = new MainViewModel(
+            SchematicSession.CreateBlank("Teste", clock.Now),
+            new DirectMainThread(),
+            dialogs,
+            Path.Combine(root, "recent.json"),
+            Path.Combine(root, "settings.json"),
+            clock);
+        var blocker = Path.Combine(root, "blocked");
+        File.WriteAllText(blocker, "x");
+        main.RecoveryDirectory = blocker;
+        main.Session.Place("resistor", 0, 0);
+        clock.Now = clock.Now.AddMinutes(2);
+        main.PulseAutosave().Should().BeFalse();
+        dialogs.Alerts.Should().BeEmpty();
+        main.Notice.Should().Be("Não foi possível salvar o projeto.");
+
+        var good = Path.Combine(root, "good");
+        main.RecoveryDirectory = good;
+        clock.Now = clock.Now.AddSeconds(15);
+        main.PulseAutosave().Should().BeFalse();
+        Directory.Exists(good).Should().BeFalse();
+
+        clock.Now = clock.Now.AddMinutes(2);
+        main.PulseAutosave().Should().BeTrue();
+        SnapshotStore.List(good).Should().ContainSingle();
+        main.Notice.Should().BeNull();
+        dialogs.Alerts.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Save_survives_a_recent_list_error()
+    {
+        var dialogs = new FakeDialogs();
+        var root = Path.Combine(Path.GetTempPath(), "labz-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        var parent = Path.Combine(root, "not-a-directory");
+        File.WriteAllText(parent, "x");
+        var main = new MainViewModel(
+            SchematicSession.CreateBlank("Teste", DateTimeOffset.UnixEpoch),
+            new DirectMainThread(),
+            dialogs,
+            Path.Combine(parent, "recent.json"),
+            Path.Combine(root, "settings.json"),
+            TimeProvider.System);
+        main.Session.Place("resistor", 0, 0);
+        var folder = Path.Combine(root, "projeto");
+        dialogs.Folders.Enqueue(folder);
+        var act = () => main.Save();
+        act.Should().NotThrow();
+        File.ReadAllText(Path.Combine(folder, ProjectStore.FileName)).Should().Contain("resistor");
+        dialogs.Alerts.Should().Contain("Não foi possível salvar o projeto.");
+    }
+
     private sealed class FakeDialogs : IUserDialogs
     {
         public Queue<string?> Folders { get; } = new();

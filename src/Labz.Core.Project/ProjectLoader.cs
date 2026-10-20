@@ -47,6 +47,15 @@ public static class ProjectLoader
             return ProjectLoadResult.Invalid(Strings.InvalidFile());
         }
 
+        try
+        {
+            using var strict = JsonDocument.Parse(json, new JsonDocumentOptions { AllowDuplicateProperties = false });
+        }
+        catch (JsonException)
+        {
+            return ProjectLoadResult.Invalid(Strings.InvalidFile());
+        }
+
         JsonNode? parsed;
         try
         {
@@ -134,6 +143,11 @@ internal static class ProjectStructure
             if (!components.TryAdd(component.Id, component))
             {
                 return Strings.DuplicateComponent(component.Id);
+            }
+
+            if (component.Id is "load" or "balance")
+            {
+                return Strings.ReservedId(component.Id);
             }
         }
 

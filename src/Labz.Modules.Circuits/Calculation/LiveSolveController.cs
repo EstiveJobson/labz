@@ -198,7 +198,7 @@ public sealed class LiveSolveController : IDisposable
         FloatingNodeException floating => new(CircuitProblemKind.FloatingNode, floating.Message, floating.ComponentIds),
         VoltageSourceLoopException loop => new(CircuitProblemKind.VoltageSourceShort, loop.Message, loop.ComponentIds),
         CircuitSolverException solver => new(CircuitProblemKind.CalculationFailed, solver.Message, solver.ComponentIds),
-        _ => new(CircuitProblemKind.CalculationFailed, exception.Message, []),
+        _ => new(CircuitProblemKind.CalculationFailed, Strings.CalculationFailed(), []),
     };
 
     private void ClearRunning(int generation)

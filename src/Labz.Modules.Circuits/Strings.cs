@@ -168,6 +168,10 @@ internal static class Strings
 
     public static string CardChargeEnergy => Get("CardChargeEnergy");
 
+    public static string NotApplicable => Get("NotApplicable");
+
+    public static string CalculationFailed() => Get("CalculationFailed");
+
     private static string Get(string name)
     {
         return ResourceManager.GetString(name, CultureInfo.InvariantCulture)

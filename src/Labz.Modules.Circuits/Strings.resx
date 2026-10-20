@@ -25,7 +25,7 @@
     <value>A matriz do circuito é singular. Componentes: {0}.</value>
   </data>
   <data name="NoConvergence" xml:space="preserve">
-    <value>O solver de corrente contínua não convergiu. Componentes: {0}.</value>
+    <value>O cálculo de corrente contínua não convergiu. Componentes: {0}.</value>
   </data>
   <data name="PowerBalance" xml:space="preserve">
     <value>O balanço de potência não fechou. Componentes: {0}.</value>
@@ -235,12 +235,18 @@
     <value>—</value>
   </data>
   <data name="HoursInvalid" xml:space="preserve">
-    <value>Informe um número de horas maior ou igual a zero.</value>
+    <value>As horas por dia devem ficar entre 0 e 24.</value>
   </data>
   <data name="CardConsumption" xml:space="preserve">
     <value>Consumo</value>
   </data>
   <data name="CardChargeEnergy" xml:space="preserve">
-    <value>Carga</value>
+    <value>Carregamento</value>
+  </data>
+  <data name="NotApplicable" xml:space="preserve">
+    <value>Não se aplica</value>
+  </data>
+  <data name="CalculationFailed" xml:space="preserve">
+    <value>Não foi possível calcular o circuito.</value>
   </data>
 </root>

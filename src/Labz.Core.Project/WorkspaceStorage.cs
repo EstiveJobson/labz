@@ -163,6 +163,8 @@ public sealed class AutosavePolicy
     }
 
     public void MarkSaved() => _last = _clock.GetUtcNow();
+
+    public void Backoff() => _last = _clock.GetUtcNow();
 }
 
 public static class SnapshotStore
@@ -176,15 +178,7 @@ public static class SnapshotStore
         var history = Path.Combine(projectFolder, ProjectStore.HistoryDirectoryName);
         Directory.CreateDirectory(history);
         var stamp = at.ToUniversalTime().ToString("yyyyMMddHHmmssfffffff", System.Globalization.CultureInfo.InvariantCulture);
-        var path = Path.Combine(history, stamp + ".json");
-        var suffix = 1;
-        while (File.Exists(path))
-        {
-            path = Path.Combine(history, stamp + "-" + suffix.ToString(System.Globalization.CultureInfo.InvariantCulture) + ".json");
-            suffix++;
-        }
-
-        File.WriteAllText(path, ProjectJson.Serialize(document));
+        File.WriteAllText(NextSnapshotPath(history, stamp), ProjectJson.Serialize(document));
         foreach (var extra in List(projectFolder).Take(Math.Max(0, List(projectFolder).Count - Capacity)))
         {
             File.Delete(extra);
@@ -205,6 +199,36 @@ public static class SnapshotStore
             .ThenBy(item => item.Name.Suffix)
             .Select(item => item.Path)
             .ToArray();
+    }
+
+    private static string NextSnapshotPath(string history, string stamp)
+    {
+        var maxSuffix = -1;
+        if (Directory.Exists(history))
+        {
+            foreach (var file in Directory.GetFiles(history, stamp + "*.json"))
+            {
+                var name = ParseName(file);
+                if (!string.Equals(name.Stamp, stamp, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                if (name.Suffix > maxSuffix)
+                {
+                    maxSuffix = name.Suffix;
+                }
+            }
+        }
+
+        if (maxSuffix < 0)
+        {
+            return Path.Combine(history, stamp + ".json");
+        }
+
+        return Path.Combine(
+            history,
+            stamp + "-" + (maxSuffix + 1).ToString(System.Globalization.CultureInfo.InvariantCulture) + ".json");
     }
 
     private static (string Stamp, int Suffix) ParseName(string path)

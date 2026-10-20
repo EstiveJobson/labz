@@ -42,6 +42,8 @@ internal static class Strings
 
     public static string NotUtf8() => Get("NotUtf8");
 
+    public static string ReservedId(string id) => Format("ReservedId", id);
+
     private static string Get(string name)
     {
         return ResourceManager.GetString(name, CultureInfo.InvariantCulture)

@@ -109,7 +109,7 @@
     <value>Horas de sol pico</value>
   </data>
   <data name="HoursInvalid" xml:space="preserve">
-    <value>Informe um número de horas maior ou igual a zero.</value>
+    <value>As horas por dia devem ficar entre 0 e 24.</value>
   </data>
   <data name="ChargeEfficiencyLabel" xml:space="preserve">
     <value>Eficiência de carga: 1,0</value>

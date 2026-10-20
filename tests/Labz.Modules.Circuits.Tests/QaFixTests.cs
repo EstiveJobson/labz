@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using FluentAssertions;
 using Labz.Core.Project;
 using Labz.Core.Units;
@@ -82,7 +83,7 @@ public class QaFixTests
     {
         var session = Blank();
         var act = () => session.SetUsageHours("LOAD", 30);
-        act.Should().Throw<ArgumentOutOfRangeException>().WithMessage("*horas*");
+        act.Should().Throw<ArgumentOutOfRangeException>().WithMessage("*entre 0 e 24*");
     }
 
     [Fact]
@@ -166,7 +167,8 @@ public class QaFixTests
 
         var solution = new DcSolver().Solve(CircuitMapper.ToCircuit(session.State), CircuitMapper.ToEnergy(session.State));
         var projection = ResultProjection.From(session.State, solution, 6);
-        projection.Rows.Where(row => row.Id.StartsWith('R')).Should().OnlyContain(row => row.RatingText == "excede a potência");
+        projection.Rows.Where(row => row.Id.StartsWith('R')).Should().OnlyContain(row =>
+            row.RatingText == "excede a potência" && row.RatingTrace.Contains(row.Id + ".rating"));
 
         var unbalanced = new DcSolution(solution.Results, false, solution.PowerRatings);
         ResultProjection.From(session.State, unbalanced, 6).BalanceText.Should().Be("Balanço de potência fora da tolerância.");
@@ -189,8 +191,8 @@ public class QaFixTests
         var both = Solve(session);
         var cards = ResultProjection.From(session.State, both, 6);
         cards.Cards.Single(card => card.Title == "Consumo").Text.Should().Contain("Wh/dia");
-        cards.Cards.Single(card => card.Title == "Carga").Trace.Should().Contain("energy.charge.Wh_day");
-        cards.Cards.Single(card => card.Title == "Autonomia").Text.Should().NotBe("—").And.Contain("dia");
+        cards.Cards.Single(card => card.Title == "Carregamento").Trace.Should().Contain("energy.charge.Wh_day");
+        cards.Cards.Single(card => card.Title == "Autonomia").Text.Should().Be("Não se aplica");
     }
 
     [Fact]
@@ -230,12 +232,14 @@ public class QaFixTests
             problem.Kind == CircuitProblemKind.MissingGround && problem.ComponentIds.Contains("R1"));
 
         var boom = new LiveSolveController(
-            solve: (_, _, _, _) => throw new InvalidOperationException("falhou"));
+            solve: (_, _, _, _) => throw new InvalidOperationException("The MNA stamp did not match the voltage-source count."));
         boom.SolveNow(session.State);
         boom.IsRunning.Should().BeFalse();
         boom.ShowProgress.Should().BeFalse();
         boom.BlockedMessage.Should().NotBeNull();
-        boom.Problems.Should().Contain(problem => problem.Kind == CircuitProblemKind.CalculationFailed);
+        var failed = boom.Problems.Should().ContainSingle(problem => problem.Kind == CircuitProblemKind.CalculationFailed).Subject;
+        failed.Message.Should().Be("Não foi possível calcular o circuito.");
+        failed.Message.Should().NotContain("MNA");
     }
 
     [Fact]
@@ -255,6 +259,23 @@ public class QaFixTests
         names.Should().HaveCount(20);
         names.Should().NotContain("197001010000000000000.json");
         names[0].Should().Be("197001010000000000000-1.json");
+    }
+
+    [Fact]
+    public void Twenty_five_snapshots_at_one_instant_keep_the_newest_twenty()
+    {
+        var folder = TempFolder();
+        var document = ValidDocument();
+        var instant = DateTimeOffset.UnixEpoch;
+        for (var copy = 0; copy < 25; copy++)
+        {
+            SnapshotStore.Write(folder, document, instant);
+        }
+
+        var names = SnapshotStore.List(folder).Select(Path.GetFileName).ToArray();
+        names.Should().HaveCount(20);
+        names[0].Should().Be("197001010000000000000-5.json");
+        names[^1].Should().Be("197001010000000000000-24.json");
     }
 
     [Fact]
@@ -285,6 +306,107 @@ public class QaFixTests
         ui.Should().NotContain("Preset Schottky");
         ui.Should().Contain("Predefinição Schottky");
         ui.Should().Contain("Clique no esquema");
+    }
+
+    [Fact]
+    public void A_real_nanoamp_branch_is_not_rounded_to_zero()
+    {
+        var session = Blank();
+        var source = session.Place("dc_voltage_source", 0, 0);
+        var low = session.Place("resistor", 80, 0);
+        var high = session.Place("resistor", 80, 80);
+        var ground = session.Place("ground", 0, 120);
+        session.TrySetParam(source, "voltage", "10 V", out _).Should().BeTrue();
+        session.TrySetParam(low, "resistance", "1 Ω", out _).Should().BeTrue();
+        session.TrySetParam(high, "resistance", "100 GΩ", out _).Should().BeTrue();
+        session.ConnectPins(source, "+", low, "1");
+        session.ConnectPins(high, "1", low, "1");
+        session.ConnectPins(low, "2", ground, "g");
+        session.ConnectPins(high, "2", ground, "g");
+        session.ConnectPins(source, "-", ground, "g");
+
+        var solution = Solve(session);
+        solution.Results.TryGet(high + ".I", out var current).Should().BeTrue();
+        current!.Value.Should().BeApproximately(1e-10, 1e-14);
+        var row = ResultProjection.From(session.State, solution, 6).Rows.Single(item => item.Id == high);
+        row.Current.Should().NotBe("0 A");
+        row.Power.Should().NotBe("0 W");
+    }
+
+    [Fact]
+    public void Nested_duplicate_keys_and_reserved_ids_are_invalid()
+    {
+        var nested = MinimalProject().Replace(
+            "\"resistance\": \"1 kΩ\"",
+            "\"resistance\": \"1 kΩ\", \"resistance\": \"2 Ω\"",
+            StringComparison.Ordinal);
+        ProjectLoader.Load(nested).Status.Should().Be(ProjectLoadStatus.Invalid);
+
+        var reserved = MinimalProject().Replace("\"id\": \"R1\"", "\"id\": \"balance\"", StringComparison.Ordinal);
+        var loaded = ProjectLoader.Load(reserved);
+        loaded.Status.Should().Be(ProjectLoadStatus.Invalid);
+        loaded.Error.Should().Contain("balance");
+
+        var loadId = MinimalProject().Replace("\"id\": \"R1\"", "\"id\": \"load\"", StringComparison.Ordinal);
+        ProjectLoader.Load(loadId).Status.Should().Be(ProjectLoadStatus.Invalid);
+    }
+
+    [Fact]
+    public void Save_replaces_the_project_file_instead_of_writing_it_in_place()
+    {
+        var folder = TempFolder();
+        ProjectStore.Save(folder, ValidDocument());
+        var path = ProjectStore.ProjectPath(folder);
+        var before = FileIdentity(path);
+        var updated = ValidDocument();
+        updated.Name = "Trocado";
+        using (var held = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Delete))
+        {
+            ProjectStore.Save(folder, updated);
+            _ = held.Length;
+        }
+
+        File.ReadAllText(path).Should().Contain("Trocado");
+        File.Exists(path + ".tmp").Should().BeFalse();
+        if (before is not null)
+        {
+            FileIdentity(path).Should().NotBe(before);
+        }
+    }
+
+    [Fact]
+    public void No_op_edits_do_not_enter_history_and_moves_snap()
+    {
+        var session = Blank();
+        var id = session.Place("resistor", 0, 0);
+        var history = session.State.History.Count;
+        session.TrySetParam(id, "resistance", "1 kΩ", out _).Should().BeTrue();
+        session.Move(id, 0, 0);
+        session.State.History.Count.Should().Be(history);
+
+        session.Move(id, 14, 26);
+        session.State.Find(id)!.X.Should().Be(20);
+        session.State.Find(id)!.Y.Should().Be(20);
+    }
+
+    [Fact]
+    public void Deleting_a_part_removes_its_pins_from_the_net()
+    {
+        var session = Blank();
+        var first = session.Place("resistor", 0, 0);
+        var second = session.Place("resistor", 80, 0);
+        session.ConnectPins(first, "2", second, "1");
+        session.Delete(first);
+        session.State.Nets.SelectMany(net => net.Connections).Should().NotContain(pin => pin.ComponentId == first);
+        session.State.Find(first).Should().BeNull();
+    }
+
+    [Fact]
+    public void Convergence_text_does_not_name_the_solver_and_days_are_plural()
+    {
+        Strings.NoConvergence("D1").Should().NotContain("solver");
+        var result = new Labz.Core.Engine.EngineResult("energy.autonomy.d", 2, "d", "energy.autonomy_d", []);
+        ResultText.Format(result, 4).Should().Be("2 dias");
     }
 
     private static DcSolution Solve(SchematicSession session) =>
@@ -327,6 +449,23 @@ public class QaFixTests
           "history": []
         }
         """;
+
+    private static string? FileIdentity(string path)
+    {
+        if (!OperatingSystem.IsLinux())
+        {
+            return null;
+        }
+
+        using var process = Process.Start(new ProcessStartInfo("stat", "-c %i " + path)
+        {
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+        });
+        var identity = process!.StandardOutput.ReadToEnd().Trim();
+        process.WaitForExit();
+        return identity;
+    }
 
     private static string TempFolder()
     {

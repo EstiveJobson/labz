@@ -20,6 +20,7 @@ public sealed class MainViewModel : ObservableObject, IProjectActions
     private readonly PlaceholderViewModel _simulation;
     private object? _currentPage;
     private bool _dirty;
+    private string? _notice;
 
     public MainViewModel()
         : this(
@@ -30,6 +31,10 @@ public sealed class MainViewModel : ObservableObject, IProjectActions
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), Strings.AppTitle, "settings.json"),
             TimeProvider.System)
     {
+        RecoveryDirectory = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            Strings.AppTitle,
+            "recovery");
     }
 
     public MainViewModel(
@@ -76,6 +81,12 @@ public sealed class MainViewModel : ObservableObject, IProjectActions
     public string? Folder { get; private set; }
 
     public string? RecoveryDirectory { get; set; }
+
+    public string? Notice
+    {
+        get => _notice;
+        private set => SetProperty(ref _notice, value);
+    }
 
     public Action? CommitFocusedEdits { get; set; }
 
@@ -237,11 +248,17 @@ public sealed class MainViewModel : ObservableObject, IProjectActions
             Directory.CreateDirectory(folder);
             SnapshotStore.Write(folder, Session.ToDocument(), _clock.GetUtcNow());
             _autosave.MarkSaved();
+            if (Notice == Strings.SaveFailed)
+            {
+                Notice = null;
+            }
+
             return true;
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException)
         {
-            _dialogs.Alert(Strings.SaveFailed);
+            _autosave.Backoff();
+            Notice = Strings.SaveFailed;
             return false;
         }
     }
@@ -256,7 +273,7 @@ public sealed class MainViewModel : ObservableObject, IProjectActions
         {
             ProjectStore.Save(folder, Session.ToDocument());
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException)
         {
             _dialogs.Alert(Strings.SaveFailed);
             return;
@@ -265,7 +282,20 @@ public sealed class MainViewModel : ObservableObject, IProjectActions
         Folder = folder;
         IsDirty = false;
         _autosave.MarkSaved();
-        Remember();
+        if (Notice == Strings.SaveFailed)
+        {
+            Notice = null;
+        }
+
+        try
+        {
+            Remember();
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            _dialogs.Alert(Strings.SaveFailed);
+        }
+
         Home.Reload();
         OnPropertyChanged(nameof(WindowTitle));
     }
