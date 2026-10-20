@@ -23,6 +23,34 @@ public static class Strings
 
     public static string UnderConstruction => Get(nameof(UnderConstruction));
 
+    public static string LibraryHeader => Get(nameof(LibraryHeader));
+
+    public static string PropertiesHeader => Get(nameof(PropertiesHeader));
+
+    public static string Undo => Get(nameof(Undo));
+
+    public static string Redo => Get(nameof(Redo));
+
+    public static string Rotate => Get(nameof(Rotate));
+
+    public static string Delete => Get(nameof(Delete));
+
+    public static string PlaceHint => Get(nameof(PlaceHint));
+
+    public static string WireHint => Get(nameof(WireHint));
+
+    public static string NoSelection => Get(nameof(NoSelection));
+
+    public static string SwitchClosed => Get(nameof(SwitchClosed));
+
+    public static string SwitchOpen => Get(nameof(SwitchOpen));
+
+    public static string SchottkyPreset => Get(nameof(SchottkyPreset));
+
+    public static string StandardDiodePreset => Get(nameof(StandardDiodePreset));
+
+    public static string NewProjectName => Get(nameof(NewProjectName));
+
     private static string Get(string name)
     {
         return ResourceManager.GetString(name, CultureInfo.CurrentUICulture)

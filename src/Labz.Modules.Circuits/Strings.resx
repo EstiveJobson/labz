@@ -84,4 +84,127 @@
   <data name="DepthOfDischarge" xml:space="preserve">
     <value>A profundidade de descarga deve ser um número finito entre 0 e 1.</value>
   </data>
+  <data name="UnknownType" xml:space="preserve">
+    <value>O tipo de componente "{0}" não é conhecido.</value>
+  </data>
+  <data name="IdPattern" xml:space="preserve">
+    <value>O identificador gerado "{0}" não segue o padrão do esquema.</value>
+  </data>
+  <data name="IdExhausted" xml:space="preserve">
+    <value>Não há identificador livre com o prefixo "{0}".</value>
+  </data>
+  <data name="UnknownParam" xml:space="preserve">
+    <value>O parâmetro "{0}" não existe neste componente.</value>
+  </data>
+  <data name="RequiredParam" xml:space="preserve">
+    <value>Informe {0}.</value>
+  </data>
+  <data name="StateValue" xml:space="preserve">
+    <value>O estado da chave deve ser aberta ou fechada.</value>
+  </data>
+  <data name="UnconnectedPin" xml:space="preserve">
+    <value>O pino {0}.{1} não está ligado.</value>
+  </data>
+  <data name="VoltageShort" xml:space="preserve">
+    <value>Curto-circuito na fonte de tensão: {0}.</value>
+  </data>
+  <data name="TypeResistor" xml:space="preserve">
+    <value>Resistor</value>
+  </data>
+  <data name="TypeCapacitor" xml:space="preserve">
+    <value>Capacitor</value>
+  </data>
+  <data name="TypeInductor" xml:space="preserve">
+    <value>Indutor</value>
+  </data>
+  <data name="TypeDiode" xml:space="preserve">
+    <value>Diodo</value>
+  </data>
+  <data name="TypeLed" xml:space="preserve">
+    <value>LED</value>
+  </data>
+  <data name="TypeVoltageSource" xml:space="preserve">
+    <value>Fonte de tensão CC</value>
+  </data>
+  <data name="TypeSolarPanel" xml:space="preserve">
+    <value>Painel solar</value>
+  </data>
+  <data name="TypeBattery" xml:space="preserve">
+    <value>Bateria</value>
+  </data>
+  <data name="TypeSwitch" xml:space="preserve">
+    <value>Chave</value>
+  </data>
+  <data name="TypeGround" xml:space="preserve">
+    <value>Terra</value>
+  </data>
+  <data name="ParamResistance" xml:space="preserve">
+    <value>Resistência</value>
+  </data>
+  <data name="ParamPowerRating" xml:space="preserve">
+    <value>Potência nominal</value>
+  </data>
+  <data name="ParamCapacitance" xml:space="preserve">
+    <value>Capacitância</value>
+  </data>
+  <data name="ParamInitialVoltage" xml:space="preserve">
+    <value>Tensão inicial</value>
+  </data>
+  <data name="ParamInductance" xml:space="preserve">
+    <value>Indutância</value>
+  </data>
+  <data name="ParamInitialCurrent" xml:space="preserve">
+    <value>Corrente inicial</value>
+  </data>
+  <data name="ParamSaturationCurrent" xml:space="preserve">
+    <value>Corrente de saturação</value>
+  </data>
+  <data name="ParamEmission" xml:space="preserve">
+    <value>Coeficiente de emissão</value>
+  </data>
+  <data name="ParamSeriesResistance" xml:space="preserve">
+    <value>Resistência série</value>
+  </data>
+  <data name="ParamBreakdown" xml:space="preserve">
+    <value>Tensão de ruptura</value>
+  </data>
+  <data name="ParamForwardVoltage" xml:space="preserve">
+    <value>Tensão direta</value>
+  </data>
+  <data name="ParamForwardCurrent" xml:space="preserve">
+    <value>Corrente direta</value>
+  </data>
+  <data name="ParamColor" xml:space="preserve">
+    <value>Cor</value>
+  </data>
+  <data name="ParamVoltage" xml:space="preserve">
+    <value>Tensão</value>
+  </data>
+  <data name="ParamOpenCircuitVoltage" xml:space="preserve">
+    <value>Tensão de circuito aberto</value>
+  </data>
+  <data name="ParamRatedPower" xml:space="preserve">
+    <value>Potência nominal</value>
+  </data>
+  <data name="ParamNominalVoltage" xml:space="preserve">
+    <value>Tensão nominal</value>
+  </data>
+  <data name="ParamInternalResistance" xml:space="preserve">
+    <value>Resistência interna</value>
+  </data>
+  <data name="ParamCapacity" xml:space="preserve">
+    <value>Capacidade</value>
+  </data>
+  <data name="ParamDepthOfDischarge" xml:space="preserve">
+    <value>Profundidade de descarga</value>
+  </data>
+  <data name="ParamState" xml:space="preserve">
+    <value>Estado</value>
+  </data>
+  <data name="ParamRon" xml:space="preserve">
+    <value>Resistência fechada</value>
+  </data>
+  <data name="ParamRoff" xml:space="preserve">
+    <value>Resistência aberta</value>
+  </data>
 </root>

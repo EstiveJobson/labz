@@ -8,5 +8,8 @@
         <DataTemplate DataType="{x:Type vm:PlaceholderViewModel}">
             <views:PlaceholderView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:SchematicViewModel}">
+            <views:SchematicView />
+        </DataTemplate>
     </Application.Resources>
 </Application>

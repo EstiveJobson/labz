@@ -33,4 +33,46 @@
   <data name="UnderConstruction" xml:space="preserve">
     <value>Em construção</value>
   </data>
+  <data name="LibraryHeader" xml:space="preserve">
+    <value>Biblioteca</value>
+  </data>
+  <data name="PropertiesHeader" xml:space="preserve">
+    <value>Propriedades</value>
+  </data>
+  <data name="Undo" xml:space="preserve">
+    <value>Desfazer</value>
+  </data>
+  <data name="Redo" xml:space="preserve">
+    <value>Refazer</value>
+  </data>
+  <data name="Rotate" xml:space="preserve">
+    <value>Girar</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>Apagar</value>
+  </data>
+  <data name="PlaceHint" xml:space="preserve">
+    <value>Clique no canvas para colocar {0}.</value>
+  </data>
+  <data name="WireHint" xml:space="preserve">
+    <value>Clique em outro pino, ou num fio, para ligar.</value>
+  </data>
+  <data name="NoSelection" xml:space="preserve">
+    <value>Selecione um componente.</value>
+  </data>
+  <data name="SwitchClosed" xml:space="preserve">
+    <value>Fechada</value>
+  </data>
+  <data name="SwitchOpen" xml:space="preserve">
+    <value>Aberta</value>
+  </data>
+  <data name="SchottkyPreset" xml:space="preserve">
+    <value>Preset Schottky</value>
+  </data>
+  <data name="StandardDiodePreset" xml:space="preserve">
+    <value>Preset 1N4148</value>
+  </data>
+  <data name="NewProjectName" xml:space="preserve">
+    <value>Sem título</value>
+  </data>
 </root>
