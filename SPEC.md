@@ -445,7 +445,8 @@ Each item is a test/checklist entry. Wording is kept from the draft.
 - [ ] **CIR-8** Energy: Wh/day = P_source × hours/day. REF-1 A gives 14.3046 Wh/day.
 - [ ] **CIR-9** Battery runtime = capacity × DoD / I_discharge. REF-1 A gives 17.617 h, and autonomy gives 2.936 days.
 - [ ] **CIR-10** Charge current and recharge time: REF-1 B gives 1.176471 A and 2.975 h, and REF-1 C gives a battery charge current of 0.974026 A.
-- [ ] **CIR-11** Power balance: for any solved DC circuit, the sum of all component powers is 0 within 1e-9 W. The UI shows this as a "balanço de potência ✓" indicator.
+- [ ] **CIR-11** Power balance: for any solved DC circuit, the sum of all component powers is 0 within the three-term limit max(1e-9 W, 1e-12·Σ|P|, 1 pA·Σ|V|). The UI shows this as a "balanço de potência ✓" indicator.
+  - *Note (D12):* the 1 pA·Σ|V| term covers kilovolt roundoff. It is loose for picoamp circuits: the allowed imbalance can exceed the branch current.
 
 ### Simulation (SIM)
 - [ ] **SIM-1** The netlist generator emits a valid SPICE netlist for REF-1 that matches a committed golden file, with no time-dependent noise.
@@ -509,6 +510,7 @@ Decided by Sérgio on 2026-10-18. Body sections are updated to match.
 | D9 | Peak-sun hours | Stored as a `usageProfiles` entry whose `target` equals the panel's id (e.g. `PV1`). | §6.1, §9.1 |
 | D10 | Switches (engine) | Ideal in the engine; Ron and Roff exist only in the SPICE path (M3). | §2 Engine, §6.2 |
 | D11 | Diode / LED model | Diode: Shockley equation solved with Newton's method. LED: fixed forward-voltage drop. | §2 Engine |
+| D12 | CIR-11 balance tolerance | Three terms: a 1e-9 W floor, 1e-12 of the absolute power sum, and 1 pA times the absolute voltage sum. The voltage term is loose for pA-level circuits. | §11 CIR-11 note |
 
 ### 12.1 Open questions
 1. Whether the next module after circuits should be thermal (a natural follow-on for heat in components) or mechanics.

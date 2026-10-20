@@ -20,46 +20,26 @@ public sealed record DiodeModel
     public double SaturationCurrent
     {
         get => _saturationCurrent;
-        init => _saturationCurrent = RequirePositive(value, nameof(SaturationCurrent), Strings.DiodeSaturationCurrent());
+        init => _saturationCurrent = ParameterValidation.RequirePositive(value, Strings.PositiveFinite(Strings.DiodeSaturationCurrent()));
     }
 
     public double EmissionCoefficient
     {
         get => _emissionCoefficient;
-        init => _emissionCoefficient = RequirePositive(value, nameof(EmissionCoefficient), Strings.DiodeEmissionCoefficient());
+        init => _emissionCoefficient = ParameterValidation.RequirePositive(value, Strings.PositiveFinite(Strings.DiodeEmissionCoefficient()));
     }
 
     public double SeriesResistance
     {
         get => _seriesResistance;
-        init => _seriesResistance = RequireNonNegative(value, nameof(SeriesResistance), Strings.DiodeSeriesResistance());
+        init => _seriesResistance = ParameterValidation.RequireNonNegative(value, Strings.NonNegativeFinite(Strings.DiodeSeriesResistance()));
     }
 
     public void EnsureValid()
     {
-        RequirePositive(SaturationCurrent, nameof(SaturationCurrent), Strings.DiodeSaturationCurrent());
-        RequirePositive(EmissionCoefficient, nameof(EmissionCoefficient), Strings.DiodeEmissionCoefficient());
-        RequireNonNegative(SeriesResistance, nameof(SeriesResistance), Strings.DiodeSeriesResistance());
-    }
-
-    private static double RequirePositive(double value, string parameter, string name)
-    {
-        if (!double.IsFinite(value) || value <= 0)
-        {
-            throw new ArgumentOutOfRangeException(parameter, Strings.PositiveFinite(name));
-        }
-
-        return value;
-    }
-
-    private static double RequireNonNegative(double value, string parameter, string name)
-    {
-        if (!double.IsFinite(value) || value < 0)
-        {
-            throw new ArgumentOutOfRangeException(parameter, Strings.NonNegativeFinite(name));
-        }
-
-        return value;
+        ParameterValidation.RequirePositive(SaturationCurrent, Strings.PositiveFinite(Strings.DiodeSaturationCurrent()));
+        ParameterValidation.RequirePositive(EmissionCoefficient, Strings.PositiveFinite(Strings.DiodeEmissionCoefficient()));
+        ParameterValidation.RequireNonNegative(SeriesResistance, Strings.NonNegativeFinite(Strings.DiodeSeriesResistance()));
     }
 }
 

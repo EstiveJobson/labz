@@ -26,7 +26,7 @@ public abstract class CircuitComponent
     {
         if (string.IsNullOrWhiteSpace(id))
         {
-            throw new ArgumentException(Strings.ComponentIdRequired(), nameof(id));
+            throw new ArgumentException(Strings.ComponentIdRequired());
         }
 
         Id = id;
@@ -46,8 +46,8 @@ public sealed class ResistorComponent : CircuitComponent
     public ResistorComponent(string id, double resistanceOhms, double powerRatingWatts = 0.25)
         : base(id)
     {
-        RequirePositive(resistanceOhms, nameof(resistanceOhms));
-        RequirePositive(powerRatingWatts, nameof(powerRatingWatts));
+        ParameterValidation.RequirePositive(resistanceOhms, Strings.PositiveFinite(Strings.Resistance()));
+        ParameterValidation.RequirePositive(powerRatingWatts, Strings.PositiveFinite(Strings.PowerRating()));
         ResistanceOhms = resistanceOhms;
         PowerRatingWatts = powerRatingWatts;
         Parameters = new Dictionary<string, Quantity>
@@ -66,14 +66,6 @@ public sealed class ResistorComponent : CircuitComponent
     public override IReadOnlyList<string> Pins { get; } = ["1", "2"];
 
     public override IReadOnlyDictionary<string, Quantity> Parameters { get; }
-
-    private static void RequirePositive(double value, string name)
-    {
-        if (!double.IsFinite(value) || value <= 0)
-        {
-            throw new ArgumentOutOfRangeException(name, Strings.PositiveFinite(name));
-        }
-    }
 }
 
 public sealed class CapacitorComponent : CircuitComponent
@@ -83,7 +75,7 @@ public sealed class CapacitorComponent : CircuitComponent
     {
         if (!double.IsFinite(capacitanceFarads) || capacitanceFarads <= 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(capacitanceFarads), Strings.PositiveFinite(nameof(capacitanceFarads)));
+            ParameterValidation.ThrowOutOfRange(Strings.PositiveFinite(Strings.Capacitance()));
         }
 
         CapacitanceFarads = capacitanceFarads;
@@ -118,7 +110,7 @@ public sealed class InductorComponent : CircuitComponent
     {
         if (!double.IsFinite(inductanceHenries) || inductanceHenries <= 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(inductanceHenries), Strings.PositiveFinite(nameof(inductanceHenries)));
+            ParameterValidation.ThrowOutOfRange(Strings.PositiveFinite(Strings.Inductance()));
         }
 
         InductanceHenries = inductanceHenries;
@@ -177,7 +169,7 @@ public sealed class LedComponent : CircuitComponent
     {
         if (!double.IsFinite(forwardVoltage) || forwardVoltage <= 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(forwardVoltage), Strings.PositiveFinite(nameof(forwardVoltage)));
+            ParameterValidation.ThrowOutOfRange(Strings.PositiveFinite(Strings.ForwardVoltage()));
         }
 
         ForwardVoltage = forwardVoltage;
@@ -215,7 +207,7 @@ public sealed class DcVoltageSourceComponent : CircuitComponent
     {
         if (!double.IsFinite(voltage))
         {
-            throw new ArgumentOutOfRangeException(nameof(voltage), Strings.FiniteValue(nameof(voltage)));
+            ParameterValidation.ThrowOutOfRange(Strings.FiniteValue(Strings.Voltage()));
         }
 
         Voltage = voltage;
@@ -245,12 +237,12 @@ public sealed class SolarPanelComponent : CircuitComponent
     {
         if (!double.IsFinite(openCircuitVoltage))
         {
-            throw new ArgumentOutOfRangeException(nameof(openCircuitVoltage), Strings.FiniteValue(nameof(openCircuitVoltage)));
+            ParameterValidation.ThrowOutOfRange(Strings.FiniteValue(Strings.OpenCircuitVoltage()));
         }
 
         if (!double.IsFinite(seriesResistance) || seriesResistance < 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(seriesResistance), Strings.NonNegativeFinite(nameof(seriesResistance)));
+            ParameterValidation.ThrowOutOfRange(Strings.NonNegativeFinite(Strings.SeriesResistance()));
         }
 
         OpenCircuitVoltage = openCircuitVoltage;
@@ -294,22 +286,22 @@ public sealed class BatteryComponent : CircuitComponent
     {
         if (!double.IsFinite(nominalVoltage))
         {
-            throw new ArgumentOutOfRangeException(nameof(nominalVoltage), Strings.FiniteValue(nameof(nominalVoltage)));
+            ParameterValidation.ThrowOutOfRange(Strings.FiniteValue(Strings.NominalVoltage()));
         }
 
         if (!double.IsFinite(internalResistance) || internalResistance < 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(internalResistance), Strings.NonNegativeFinite(nameof(internalResistance)));
+            ParameterValidation.ThrowOutOfRange(Strings.NonNegativeFinite(Strings.InternalResistance()));
         }
 
         if (!double.IsFinite(capacityAmpereHours) || capacityAmpereHours < 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(capacityAmpereHours), Strings.NonNegativeFinite(nameof(capacityAmpereHours)));
+            ParameterValidation.ThrowOutOfRange(Strings.NonNegativeFinite(Strings.Capacity()));
         }
 
         if (!double.IsFinite(usableDepthOfDischarge) || usableDepthOfDischarge is < 0 or > 1)
         {
-            throw new ArgumentOutOfRangeException(nameof(usableDepthOfDischarge), Strings.DepthOfDischarge());
+            ParameterValidation.ThrowOutOfRange(Strings.DepthOfDischarge());
         }
 
         NominalVoltage = nominalVoltage;
@@ -357,12 +349,12 @@ public sealed class SwitchComponent : CircuitComponent
     {
         if (!double.IsFinite(ronOhms) || ronOhms < 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(ronOhms), Strings.NonNegativeFinite(nameof(ronOhms)));
+            ParameterValidation.ThrowOutOfRange(Strings.NonNegativeFinite(Strings.Ron()));
         }
 
         if (!double.IsFinite(roffOhms) || roffOhms < 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(roffOhms), Strings.NonNegativeFinite(nameof(roffOhms)));
+            ParameterValidation.ThrowOutOfRange(Strings.NonNegativeFinite(Strings.Roff()));
         }
 
         State = state;
@@ -416,7 +408,7 @@ public sealed class CircuitBuilder
         ArgumentNullException.ThrowIfNull(component);
         if (!_ids.Add(component.Id))
         {
-            throw new ArgumentException(Strings.DuplicateComponent(component.Id), nameof(component));
+            throw new ArgumentException(Strings.DuplicateComponent(component.Id));
         }
 
         _components.Add(component);
@@ -427,7 +419,7 @@ public sealed class CircuitBuilder
     {
         if (string.IsNullOrWhiteSpace(netId))
         {
-            throw new ArgumentException(Strings.NetIdRequired(), nameof(netId));
+            throw new ArgumentException(Strings.NetIdRequired());
         }
 
         if (!_nets.TryGetValue(netId, out var connections))
