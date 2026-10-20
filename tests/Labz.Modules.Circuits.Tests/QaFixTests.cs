@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using FluentAssertions;
 using Labz.Core.Project;
 using Labz.Core.Units;
@@ -360,18 +361,11 @@ public class QaFixTests
         var before = FileIdentity(path);
         var updated = ValidDocument();
         updated.Name = "Trocado";
-        using (var held = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Delete))
-        {
-            ProjectStore.Save(folder, updated);
-            _ = held.Length;
-        }
+        ProjectStore.Save(folder, updated);
 
         File.ReadAllText(path).Should().Contain("Trocado");
         File.Exists(path + ".tmp").Should().BeFalse();
-        if (before is not null)
-        {
-            FileIdentity(path).Should().NotBe(before);
-        }
+        FileIdentity(path).Should().NotBe(before);
     }
 
     [Fact]
@@ -450,11 +444,17 @@ public class QaFixTests
         }
         """;
 
-    private static string? FileIdentity(string path)
+    private static string FileIdentity(string path)
     {
-        if (!OperatingSystem.IsLinux())
+        if (OperatingSystem.IsWindows())
         {
-            return null;
+            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            if (!GetFileInformationByHandle(stream.SafeFileHandle, out var info))
+            {
+                throw new InvalidOperationException("Could not read the file identity.");
+            }
+
+            return info.VolumeSerialNumber + ":" + info.FileIndexHigh + ":" + info.FileIndexLow;
         }
 
         using var process = Process.Start(new ProcessStartInfo("stat", "-c %i " + path)
@@ -466,6 +466,26 @@ public class QaFixTests
         process.WaitForExit();
         return identity;
     }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    private struct ByHandleFileInformation
+    {
+        public uint FileAttributes;
+        public long CreationTime;
+        public long LastAccessTime;
+        public long LastWriteTime;
+        public uint VolumeSerialNumber;
+        public uint FileSizeHigh;
+        public uint FileSizeLow;
+        public uint NumberOfLinks;
+        public uint FileIndexHigh;
+        public uint FileIndexLow;
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool GetFileInformationByHandle(
+        Microsoft.Win32.SafeHandles.SafeFileHandle file,
+        out ByHandleFileInformation information);
 
     private static string TempFolder()
     {
