@@ -66,6 +66,8 @@ public static class DenseLinearSolver
         Interlocked.Increment(ref _factorizationCount);
         var n = matrix.GetLength(0);
         var a = (double[,])matrix.Clone();
+        // Equilibrate before pivoting. A 1e-16 row beside a 1e16 row is otherwise lost,
+        // and iterative refinement does not restore it.
         var rowScale = new double[n];
         for (var row = 0; row < n; row++)
         {

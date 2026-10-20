@@ -75,6 +75,30 @@ public class QuantityEdgeTests
     }
 
     [Theory]
+    [InlineData("1,000,000")]
+    [InlineData("1,5,2")]
+    [InlineData("1,000.5")]
+    public void Comma_led_repeated_separators_are_rejected(string text)
+    {
+        var act = () => QuantityParser.Parse(text, Dimension.Resistance);
+        act.Should().Throw<QuantityFormatException>()
+            .WithMessage("*vírgula*separador de milhar*");
+    }
+
+    [Fact]
+    public void Parser_rejects_1_8e308()
+    {
+        var act = () => QuantityParser.Parse("1.8e308", Dimension.Resistance);
+        act.Should().Throw<QuantityFormatException>().WithMessage("*finito*");
+    }
+
+    [Fact]
+    public void One_comma_000_ohms_is_one_ohm()
+    {
+        QuantityParser.Parse("1,000 Ω", Dimension.Resistance).Value.Should().Be(1);
+    }
+
+    [Theory]
     [InlineData("1.000 Ω")]
     [InlineData("12.500")]
     [InlineData("1.234.567")]
@@ -145,11 +169,36 @@ public class QuantityEdgeTests
     {
         QuantityParser.Parse("2 min", Dimension.Time).In(KnownUnits.Minute).Should().BeApproximately(2, 1e-12);
         QuantityParser.Parse("3 d", Dimension.Time).In(KnownUnits.Day).Should().BeApproximately(3, 1e-12);
+        QuantityParser.Parse("2 mH", Dimension.Inductance).Value.Should().BeApproximately(0.002, 1e-12);
         QuantityParser.Parse("14 Wh/day", Dimension.EnergyPerDay).In(KnownUnits.WattHourPerDay).Should().BeApproximately(14, 1e-9);
         var milliHour = () => QuantityParser.Parse("2 mh", Dimension.Time);
         milliHour.Should().Throw<QuantityFormatException>().WithMessage("*hora*");
         var kiloHour = () => QuantityParser.Parse("2 kh", Dimension.Time);
         kiloHour.Should().Throw<QuantityFormatException>().WithMessage("*hora*");
+    }
+
+    [Theory]
+    [InlineData("2 mmin", "*minuto*")]
+    [InlineData("2 kmin", "*minuto*")]
+    [InlineData("2mmin", "*minuto*")]
+    [InlineData("2 md", "*dia*")]
+    [InlineData("2 kd", "*dia*")]
+    [InlineData("2 Td", "*dia*")]
+    public void Minute_and_day_reject_prefixes(string text, string message)
+    {
+        var act = () => QuantityParser.Parse(text, Dimension.Time);
+        act.Should().Throw<QuantityFormatException>().WithMessage(message);
+    }
+
+    [Fact]
+    public void Capacitor_rkm_accepts_nano_and_micro()
+    {
+        QuantityParser.Parse("4n7", Dimension.Capacitance).Value.Should().BeApproximately(4.7e-9, 1e-18);
+        QuantityParser.Parse("4u7", Dimension.Capacitance).Value.Should().BeApproximately(4.7e-6, 1e-15);
+        var resistance = () => QuantityParser.Parse("4n7", Dimension.Resistance);
+        resistance.Should().Throw<QuantityFormatException>();
+        var inductance = () => QuantityParser.Parse("4u7", Dimension.Inductance);
+        inductance.Should().Throw<QuantityFormatException>();
     }
 
     [Fact]

@@ -24,7 +24,7 @@ internal static class Strings
     public static string AmbiguousSeparator(string text) =>
         Format("AmbiguousSeparator", text);
 
-    public static string PrefixedHour() => Format("PrefixedHour");
+    public static string PrefixedUnit(string unitName) => Format("PrefixedUnit", unitName);
 
     public static string DivideByZero() => Format("DivideByZero");
 

@@ -1,7 +1,8 @@
 namespace Labz.Modules.Circuits;
 
 /// <summary>
-/// Shockley diode parameters. Breakdown voltage is stored for the later SPICE model and is not part of the v0 DC equation.
+/// Shockley diode parameters. At and above -BreakdownVoltage the current is the Shockley current.
+/// Below that voltage the junction also conducts through a 1 S slope.
 /// </summary>
 public sealed record DiodeModel(
     double SaturationCurrent,

@@ -168,6 +168,46 @@ public class SolverEdgeTests
     }
 
     [Fact]
+    public void Low_current_diode_residual_tracks_the_operating_current()
+    {
+        // Is = 10 fA through 1 GΩ at 0.35 V. A 1 nA Newton band is about 1e5 times Is and
+        // leaves the diode current and the resistor current apart by tens of percent.
+        var model = new DiodeModel(1e-14, 1, 0, 100);
+        var circuit = new CircuitBuilder()
+            .Add(new DcVoltageSourceComponent("V1", 0.35))
+            .Add(new ResistorComponent("R1", 1e9))
+            .Add(new DiodeComponent("D1", model))
+            .Add(new GroundComponent("GND"))
+            .Connect("N1", ("V1", "+"), ("R1", "1"))
+            .Connect("N2", ("R1", "2"), ("D1", "A"))
+            .Connect("0", ("V1", "-"), ("D1", "K"), ("GND", "g"))
+            .Build();
+
+        var solution = _solver.Solve(circuit);
+        var current = solution.Get("D1.I").Value;
+        var resistor = solution.Get("R1.I").Value;
+        current.Should().BeInRange(1e-12, 1e-8);
+        var scale = Math.Max(Math.Abs(current), model.SaturationCurrent);
+        Math.Abs(current - resistor).Should().BeLessThanOrEqualTo(1e-4 * scale);
+        solution.PowerBalanceOk.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Reverse_breakdown_conducts_only_past_breakdown_voltage()
+    {
+        // Below -BV the junction adds 1 S. With RS = 0, -12 V and 1 kΩ:
+        // I = (Vsrc - Vd) / R and I = Vd + BV, so I = -7/1001 A.
+        var conducting = SolveReverse(5, -12, 1000);
+        conducting.Get("D1.I").Value.Should().BeApproximately(-7.0 / 1001.0, 1e-6);
+        conducting.Get("D1.V").Value.Should().BeApproximately(-5 - (7.0 / 1001.0), 1e-6);
+        conducting.PowerBalanceOk.Should().BeTrue();
+
+        var blocking = SolveReverse(50, -12, 1000);
+        blocking.Get("D1.I").Value.Should().BeGreaterThan(-1e-6);
+        blocking.Get("D1.V").Value.Should().BeApproximately(-12, 1e-3);
+    }
+
+    [Fact]
     public void Stiff_forward_diode_converges_with_junction_limiting()
     {
         var solution = _solver.Solve(SeriesDiodes(1, 10, 1));
@@ -215,6 +255,21 @@ public class SolverEdgeTests
             .Connect("0", ("V1", "-"), ("R1", "2"), ("GND", "g"))
             .Build();
         return _solver.Solve(circuit).PowerRatings.Single().Message;
+    }
+
+    private DcSolution SolveReverse(double breakdownVoltage, double volts, double ohms)
+    {
+        var model = new DiodeModel(DiodePresets.In4148.SaturationCurrent, DiodePresets.In4148.EmissionCoefficient, 0, breakdownVoltage);
+        var circuit = new CircuitBuilder()
+            .Add(new DcVoltageSourceComponent("V1", volts))
+            .Add(new ResistorComponent("R1", ohms))
+            .Add(new DiodeComponent("D1", model))
+            .Add(new GroundComponent("GND"))
+            .Connect("N1", ("V1", "+"), ("R1", "1"))
+            .Connect("N2", ("R1", "2"), ("D1", "A"))
+            .Connect("0", ("V1", "-"), ("D1", "K"), ("GND", "g"))
+            .Build();
+        return _solver.Solve(circuit);
     }
 
     private static CircuitModel SeriesDiodes(int count, double volts, double ohms)

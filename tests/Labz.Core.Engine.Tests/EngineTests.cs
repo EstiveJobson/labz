@@ -98,6 +98,23 @@ public class EngineTests
     }
 
     [Fact]
+    public void Row_scaling_keeps_a_tiny_pivot_row_accurate()
+    {
+        // Without row scaling the 1e16 row wins the pivot, the first unknown comes back as 2,
+        // and refinement stops because the residual is small next to the largest right-hand side.
+        var matrix = new double[,]
+        {
+            { 1e-16, 1, 0 },
+            { 1, 1, 1 },
+            { 0, 1, 1e16 },
+        };
+        var solution = DenseLinearSolver.Solve(matrix, [1, 3, 1e16]);
+        solution[0].Should().BeApproximately(1, 1e-8);
+        solution[1].Should().BeApproximately(1, 1e-8);
+        solution[2].Should().BeApproximately(1, 1e-8);
+    }
+
+    [Fact]
     public void Ill_conditioned_solve_refines_without_a_second_factorization()
     {
         // A = Q diag(1e7, 1e3, 10, 1) Q^T with a Householder Q. The right-hand side is the

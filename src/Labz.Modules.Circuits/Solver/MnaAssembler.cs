@@ -33,6 +33,14 @@ internal static class MnaAssembler
     /// <summary>Conductance in parallel with every Shockley junction, in siemens.</summary>
     public const double ParallelConductance = 1e-12;
 
+    /// <summary>Siemens added once the junction is below -BreakdownVoltage.</summary>
+    private const double BreakdownConductance = 1;
+
+    private const double JunctionStepTolerance = 1e-8;
+
+    /// <summary>Fraction of the operating current. A fixed 1 nA band is larger than a picoamp junction.</summary>
+    private const double RelativeCurrentTolerance = 1e-4;
+
     private const int NewtonLimit = 80;
 
     public static SolvedCircuit Solve(
@@ -57,45 +65,27 @@ internal static class MnaAssembler
                 progressEnd);
         }
 
-        // Start at 0 V so a stiff forward diode has to be limited by pnjlim, and walk gmin
-        // down so series reverse junctions are not opened against a 1 mA forward guess.
+        // Linearization starts at 0 V so pnjlim limits the first forward step.
+        // The parallel conductance stays at ParallelConductance; gmin is not stepped.
         var linearization = new double[diodes.Length];
-        var gmin = 1e-3;
-        while (true)
+        if (!TryNewton(
+                topology,
+                ledsOn,
+                diodes,
+                linearization,
+                ParallelConductance,
+                cancellationToken,
+                progress,
+                progressStart,
+                progressEnd,
+                out var candidate))
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            var attempt = (double[])linearization.Clone();
-            if (!TryNewton(
-                    topology,
-                    ledsOn,
-                    diodes,
-                    attempt,
-                    gmin,
-                    cancellationToken,
-                    progress,
-                    progressStart,
-                    progressEnd,
-                    out var candidate))
-            {
-                if (gmin <= ParallelConductance * 1.01)
-                {
-                    throw new DcSolverConvergenceException(
-                        Strings.NoConvergence(Join(topology.Circuit.Components.Select(component => component.Id))),
-                        topology.Circuit.Components.Select(component => component.Id).ToArray());
-                }
-
-                gmin = Math.Max(ParallelConductance, gmin / 2);
-                continue;
-            }
-
-            linearization = attempt;
-            if (gmin <= ParallelConductance * 1.01)
-            {
-                return candidate;
-            }
-
-            gmin = Math.Max(ParallelConductance, gmin / 10);
+            throw new DcSolverConvergenceException(
+                Strings.NoConvergence(Join(topology.Circuit.Components.Select(component => component.Id))),
+                topology.Circuit.Components.Select(component => component.Id).ToArray());
         }
+
+        return candidate;
     }
 
     private static bool TryNewton(
@@ -140,11 +130,15 @@ internal static class MnaAssembler
                 var proposed = JunctionVoltage(topology, solved, diodes[i]);
                 var nVt = diodes[i].Model.EmissionCoefficient * DiodePhysics.ThermalVoltage;
                 var step = Math.Abs(proposed - linearization[i]);
-                EvaluateShockley(diodes[i].Model, linearization[i], out _, out var conductance);
-                // Series reverse diodes split the voltage on a gmin-scale Jacobian, so the node
-                // between them chatters by a few microvolts. That step changes the current by
-                // far less than a nanoamp. A stiff forward junction still has to land within 1e-8 V.
-                if (step > 1e-8 && step * (conductance + gmin) > 1e-9)
+                EvaluateShockley(diodes[i].Model, linearization[i], out var linearizedCurrent, out var conductance);
+                // Series reverse diodes chatter by microvolts on a gmin-scale Jacobian.
+                // Compare that current step with the operating current. A fixed 1 nA band
+                // accepts a wrong split when the junction itself is only picoamps.
+                var currentChange = step * (conductance + gmin);
+                var currentScale = Math.Max(
+                    Math.Abs(linearizedCurrent + (gmin * linearization[i])),
+                    diodes[i].Model.SaturationCurrent);
+                if (step > JunctionStepTolerance && currentChange > RelativeCurrentTolerance * currentScale)
                 {
                     converged = false;
                 }
@@ -326,6 +320,11 @@ internal static class MnaAssembler
         var exponential = Math.Exp(argument);
         current = model.SaturationCurrent * (exponential - 1);
         conductance = Math.Max(0, model.SaturationCurrent * exponential / nVt);
+        if (junctionVoltage < -model.BreakdownVoltage)
+        {
+            current += BreakdownConductance * (junctionVoltage + model.BreakdownVoltage);
+            conductance += BreakdownConductance;
+        }
     }
 
     /// <summary>
