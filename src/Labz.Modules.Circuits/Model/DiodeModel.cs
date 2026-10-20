@@ -2,37 +2,64 @@ namespace Labz.Modules.Circuits;
 
 /// <summary>
 /// Shockley parameters used by the DC equation. Reverse breakdown is not part of this model.
+/// Assignment, including a record <c>with</c> expression, rejects a non-finite or out-of-range value.
 /// </summary>
-public sealed record DiodeModel(double SaturationCurrent, double EmissionCoefficient, double SeriesResistance)
+public sealed record DiodeModel
 {
-    public double SaturationCurrent { get; init; } = Require(SaturationCurrent, EmissionCoefficient, SeriesResistance).Current;
+    private readonly double _saturationCurrent;
+    private readonly double _emissionCoefficient;
+    private readonly double _seriesResistance;
 
-    public double EmissionCoefficient { get; init; } = Require(SaturationCurrent, EmissionCoefficient, SeriesResistance).Emission;
-
-    public double SeriesResistance { get; init; } = Require(SaturationCurrent, EmissionCoefficient, SeriesResistance).Resistance;
-
-    public void EnsureValid() => Require(SaturationCurrent, EmissionCoefficient, SeriesResistance);
-
-    private readonly record struct Checked(double Current, double Emission, double Resistance);
-
-    private static Checked Require(double saturationCurrent, double emissionCoefficient, double seriesResistance)
+    public DiodeModel(double saturationCurrent, double emissionCoefficient, double seriesResistance)
     {
-        if (!double.IsFinite(saturationCurrent) || saturationCurrent <= 0)
+        SaturationCurrent = saturationCurrent;
+        EmissionCoefficient = emissionCoefficient;
+        SeriesResistance = seriesResistance;
+    }
+
+    public double SaturationCurrent
+    {
+        get => _saturationCurrent;
+        init => _saturationCurrent = RequirePositive(value, nameof(SaturationCurrent), Strings.DiodeSaturationCurrent());
+    }
+
+    public double EmissionCoefficient
+    {
+        get => _emissionCoefficient;
+        init => _emissionCoefficient = RequirePositive(value, nameof(EmissionCoefficient), Strings.DiodeEmissionCoefficient());
+    }
+
+    public double SeriesResistance
+    {
+        get => _seriesResistance;
+        init => _seriesResistance = RequireNonNegative(value, nameof(SeriesResistance), Strings.DiodeSeriesResistance());
+    }
+
+    public void EnsureValid()
+    {
+        RequirePositive(SaturationCurrent, nameof(SaturationCurrent), Strings.DiodeSaturationCurrent());
+        RequirePositive(EmissionCoefficient, nameof(EmissionCoefficient), Strings.DiodeEmissionCoefficient());
+        RequireNonNegative(SeriesResistance, nameof(SeriesResistance), Strings.DiodeSeriesResistance());
+    }
+
+    private static double RequirePositive(double value, string parameter, string name)
+    {
+        if (!double.IsFinite(value) || value <= 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(SaturationCurrent), Strings.PositiveFinite(nameof(SaturationCurrent)));
+            throw new ArgumentOutOfRangeException(parameter, Strings.PositiveFinite(name));
         }
 
-        if (!double.IsFinite(emissionCoefficient) || emissionCoefficient <= 0)
+        return value;
+    }
+
+    private static double RequireNonNegative(double value, string parameter, string name)
+    {
+        if (!double.IsFinite(value) || value < 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(EmissionCoefficient), Strings.PositiveFinite(nameof(EmissionCoefficient)));
+            throw new ArgumentOutOfRangeException(parameter, Strings.NonNegativeFinite(name));
         }
 
-        if (!double.IsFinite(seriesResistance) || seriesResistance < 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(SeriesResistance), Strings.NonNegativeFinite(nameof(SeriesResistance)));
-        }
-
-        return new Checked(saturationCurrent, emissionCoefficient, seriesResistance);
+        return value;
     }
 }
 
@@ -51,12 +78,12 @@ public static class DiodePhysics
 public static class DiodePresets
 {
     public static DiodeModel In4148 { get; } = new(
-        SaturationCurrent: 2.682e-9,
-        EmissionCoefficient: 1.836,
-        SeriesResistance: 0.5664);
+        saturationCurrent: 2.682e-9,
+        emissionCoefficient: 1.836,
+        seriesResistance: 0.5664);
 
     public static DiodeModel Schottky { get; } = new(
-        SaturationCurrent: 31.7e-6,
-        EmissionCoefficient: 1.373,
-        SeriesResistance: 0.051);
+        saturationCurrent: 31.7e-6,
+        emissionCoefficient: 1.373,
+        seriesResistance: 0.051);
 }

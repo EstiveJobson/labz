@@ -34,10 +34,15 @@ internal static class MnaAssembler
     public const double ParallelConductance = 1e-12;
 
     /// <summary>
-    /// Fraction of the junction current. Convergence compares the full model at the new voltage
-    /// with the linearized stamp, so a step into a steep region cannot hide behind the old slope.
+    /// Newton compares the Shockley current at the new voltage with the linearized stamp.
+    /// 1e-6 relative, plus 1 fA, is enough to reject a slope-only step into the exponential.
+    /// A 1e-9 relative match spent most of the 80 iterations on the clamped 1e-20 A diode
+    /// for a residual already lost in roundoff. High-power junctions also have to keep
+    /// V·ΔI inside the balance band, which is tighter than 1e-6 when the current is amperes.
     /// </summary>
-    private const double RelativeCurrentTolerance = 1e-9;
+    private const double RelativeCurrentTolerance = 1e-6;
+
+    private const double AbsoluteCurrentTolerance = 1e-15;
 
     private const int NewtonLimit = 80;
 
@@ -137,7 +142,17 @@ internal static class MnaAssembler
                 var mismatch = Math.Abs(actual - predicted);
                 var scale = Math.Max(Math.Abs(actual), Math.Abs(predicted));
                 scale = Math.Max(scale, diodes[i].Model.SaturationCurrent);
-                if (mismatch > RelativeCurrentTolerance * scale)
+                // 1e-6 relative plus 1 fA. High current also has to keep V·ΔI inside the balance band,
+                // which is tighter than 1e-6 once the junction is carrying amperes.
+                var tolerance = (RelativeCurrentTolerance * scale) + AbsoluteCurrentTolerance;
+                var balanceBand = DcSolver.PowerBalanceLimit(Math.Abs(proposed * actual), Math.Abs(proposed));
+                var powerCap = (0.2 * balanceBand) / Math.Max(Math.Abs(proposed), 1e-3);
+                if (powerCap > AbsoluteCurrentTolerance)
+                {
+                    tolerance = Math.Min(tolerance, powerCap);
+                }
+
+                if (mismatch > tolerance)
                 {
                     converged = false;
                 }

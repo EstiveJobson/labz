@@ -220,20 +220,55 @@ public class SolverEdgeTests
     [Fact]
     public void Unbalanced_diode_solution_is_rejected()
     {
-        // 50 V across 1 Ω with Is = 1 µA. The junction residual can sit inside the
-        // relative tolerance while the power sum is still outside 1e-9 W.
-        var circuit = new CircuitBuilder()
-            .Add(new DcVoltageSourceComponent("V1", 50))
-            .Add(new ResistorComponent("R1", 1))
-            .Add(new DiodeComponent("D1", new DiodeModel(1e-6, 1, 0)))
-            .Add(new GroundComponent("GND"))
-            .Connect("N1", ("V1", "+"), ("R1", "1"))
-            .Connect("N2", ("R1", "2"), ("D1", "A"))
-            .Connect("0", ("V1", "-"), ("D1", "K"), ("GND", "g"))
-            .Build();
-
-        var act = () => _solver.Solve(circuit);
+        // A divider balances. The watt is injected through the test hook, not by a bad circuit.
+        var solver = new DcSolver { PowerBalanceInjectionWatts = 1 };
+        var act = () => solver.Solve(Divider());
         act.Should().Throw<DcSolverConvergenceException>().WithMessage("*balanço de potência*");
+    }
+
+    [Fact]
+    public void In4148_at_50_volts_through_1_ohm_matches_the_resistor_current()
+    {
+        var solution = _solver.Solve(SeriesDiodes(1, 50, 1));
+        solution.PowerBalanceOk.Should().BeTrue();
+        CurrentsMatch(solution, "D1");
+    }
+
+    [Fact]
+    public void Microamp_diode_at_50_volts_through_1_ohm_matches_the_resistor_current()
+    {
+        var circuit = SeriesDiode(new DiodeModel(1e-6, 1, 0), 50, 1);
+        var solution = _solver.Solve(circuit);
+        solution.PowerBalanceOk.Should().BeTrue();
+        CurrentsMatch(solution, "D1");
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    public void Series_diodes_at_minus_10_kilovolts_share_the_resistor_current(int count)
+    {
+        var solution = _solver.Solve(SeriesDiodes(count, -10_000, 1000));
+        solution.PowerBalanceOk.Should().BeTrue();
+        var resistor = solution.Get("R1.I").Value;
+        for (var index = 1; index <= count; index++)
+        {
+            solution.Get($"D{index}.I").Value.Should().BeApproximately(resistor, 1e-9);
+        }
+    }
+
+    [Fact]
+    public void With_expression_rejects_a_negative_saturation_current()
+    {
+        var saturation = () => DiodePresets.In4148 with { SaturationCurrent = -1 };
+        saturation.Should().Throw<ArgumentOutOfRangeException>().WithMessage("*corrente de saturação (IS)*");
+
+        var emission = () => DiodePresets.In4148 with { EmissionCoefficient = 0 };
+        emission.Should().Throw<ArgumentOutOfRangeException>().WithMessage("*coeficiente de emissão (N)*");
+
+        var series = () => DiodePresets.In4148 with { SeriesResistance = double.NaN };
+        series.Should().Throw<ArgumentOutOfRangeException>().WithMessage("*resistência série (RS)*");
     }
 
     [Theory]
@@ -302,6 +337,23 @@ public class SolverEdgeTests
             .Build();
         return _solver.Solve(circuit).PowerRatings.Single().Message;
     }
+
+    private static void CurrentsMatch(DcSolution solution, string diodeId)
+    {
+        var resistor = solution.Get("R1.I").Value;
+        var diode = solution.Get(diodeId + ".I").Value;
+        Math.Abs(diode - resistor).Should().BeLessThanOrEqualTo(Math.Max(1e-9, 1e-9 * Math.Abs(resistor)));
+    }
+
+    private static CircuitModel SeriesDiode(DiodeModel model, double volts, double ohms) => new CircuitBuilder()
+        .Add(new DcVoltageSourceComponent("V1", volts))
+        .Add(new ResistorComponent("R1", ohms))
+        .Add(new DiodeComponent("D1", model))
+        .Add(new GroundComponent("GND"))
+        .Connect("N1", ("V1", "+"), ("R1", "1"))
+        .Connect("N2", ("R1", "2"), ("D1", "A"))
+        .Connect("0", ("V1", "-"), ("D1", "K"), ("GND", "g"))
+        .Build();
 
     private static CircuitModel SeriesDiodes(int count, double volts, double ohms)
     {

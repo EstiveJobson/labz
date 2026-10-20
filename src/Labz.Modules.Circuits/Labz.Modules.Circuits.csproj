@@ -5,6 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Labz.Modules.Circuits.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Labz.Core.Units\Labz.Core.Units.csproj" />
     <ProjectReference Include="..\Labz.Core.Project\Labz.Core.Project.csproj" />
     <ProjectReference Include="..\Labz.Core.Engine\Labz.Core.Engine.csproj" />

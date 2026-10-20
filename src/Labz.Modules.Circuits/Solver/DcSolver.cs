@@ -9,7 +9,14 @@ namespace Labz.Modules.Circuits;
 /// </summary>
 public sealed class DcSolver
 {
+    /// <summary>CIR-11 floor, in watts. See <see cref="PowerBalanceLimit"/> for the relative and kilovolt terms.</summary>
     public const double PowerBalanceToleranceWatts = 1e-9;
+
+    /// <summary>Relative band for cancellation that grows with the power sum, and for kilovolt current noise.</summary>
+    public const double PowerBalanceRelativeTolerance = 1e-12;
+
+    /// <summary>Absolute current noise left by a large node voltage, in amperes. Times sum|V| it is watts.</summary>
+    public const double PowerBalanceCurrentNoise = 1e-12;
 
     private const double StateCurrentTolerance = 1e-9;
 
@@ -19,10 +26,29 @@ public sealed class DcSolver
 
     private readonly FormulaRegistry _formulas;
 
+    /// <summary>
+    /// Watts added to the power sum before the balance check.
+    /// Tests inject an imbalance here instead of solving a circuit that is actually wrong.
+    /// </summary>
+    internal double PowerBalanceInjectionWatts { get; set; }
+
     public DcSolver(FormulaRegistry? formulas = null)
     {
         _formulas = formulas ?? StandardFormulas.Create();
     }
+
+    /// <summary>
+    /// CIR-11 keeps a 1e-9 W floor. A large power sum also allows 1e-12 of that sum,
+    /// because the cancellation residual grows with V·I. A kilovolt node leaves about
+    /// 1e-13 A of current noise, so 1 pA times the voltage sum covers that few-nanowatt floor
+    /// when the current itself is only nanoamps and 1e-12·sum|P| does not.
+    /// </summary>
+    public static double PowerBalanceLimit(double sumAbsPower, double sumAbsVoltage) =>
+        Math.Max(
+            PowerBalanceToleranceWatts,
+            Math.Max(
+                PowerBalanceRelativeTolerance * sumAbsPower,
+                PowerBalanceCurrentNoise * sumAbsVoltage));
 
     public DcSolution Solve(
         CircuitModel circuit,
@@ -223,12 +249,15 @@ public sealed class DcSolver
         var passiveIds = topology.Circuit.Components.Where(IsLoad).Select(component => component.Id).ToArray();
         results.Add(Result("load.P", loadPower, "W", "mna.dc", passiveIds));
 
-        var balance = branches.Values.Sum(branch => branch.Power);
+        var branchPower = branches.Values.Sum(branch => branch.Power);
+        var balance = branchPower + PowerBalanceInjectionWatts;
         results.Add(Result("balance.P", balance, "W", "mna.dc", componentIds));
         var ratings = AddPowerRatings(topology, branches, results);
         AddEnergy(topology, branches, parts, energy, results);
 
-        return new DcSolution(results, Math.Abs(balance) <= PowerBalanceToleranceWatts, ratings);
+        var powerScale = branches.Values.Sum(branch => Math.Abs(branch.Power));
+        var voltageScale = branches.Values.Sum(branch => Math.Abs(branch.Voltage));
+        return new DcSolution(results, Math.Abs(balance) <= PowerBalanceLimit(powerScale, voltageScale), ratings);
     }
 
     private Branch BranchOf(Topology topology, SolvedCircuit solved, IReadOnlySet<string> ledsOn, CircuitComponent component)

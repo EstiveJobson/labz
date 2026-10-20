@@ -49,6 +49,12 @@ internal static class Strings
 
     public static string PositiveFinite(string name) => Format("PositiveFinite", name);
 
+    public static string DiodeSaturationCurrent() => Get("DiodeSaturationCurrent");
+
+    public static string DiodeEmissionCoefficient() => Get("DiodeEmissionCoefficient");
+
+    public static string DiodeSeriesResistance() => Get("DiodeSeriesResistance");
+
     public static string NonNegativeFinite(string name) => Format("NonNegativeFinite", name);
 
     public static string FiniteValue(string name) => Format("FiniteValue", name);
