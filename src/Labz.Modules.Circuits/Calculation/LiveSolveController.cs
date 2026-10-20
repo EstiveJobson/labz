@@ -130,7 +130,7 @@ public sealed class LiveSolveController : IDisposable
             }
 
             var startedAt = Environment.TickCount64;
-            var progress = new Progress<double>(value =>
+            IProgress<double> progress = new SyncProgress(value =>
             {
                 if (generation != Volatile.Read(ref _generation))
                 {
@@ -199,6 +199,11 @@ public sealed class LiveSolveController : IDisposable
             Volatile.Write(ref _isRunning, 0);
             Volatile.Write(ref _showProgress, 0);
         });
+    }
+
+    private sealed class SyncProgress(Action<double> report) : IProgress<double>
+    {
+        public void Report(double value) => report(value);
     }
 
     private void Post(Action action)
