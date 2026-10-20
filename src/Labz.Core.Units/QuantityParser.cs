@@ -3,18 +3,20 @@ using System.Globalization;
 namespace Labz.Core.Units;
 
 /// <summary>
-/// Parses pt-BR and plain quantity strings ("4,7 kΩ", "4.7k", "100 nF", "4K7") into an SI <see cref="Quantity"/>.
+/// Parses pt-BR and plain quantity strings ("4,7 kΩ", "4.7k", "100 nF", "4K7", "4n7") into an SI <see cref="Quantity"/>.
 /// Prefixes are f, p, n, µ (also "u"), m, k, M, G and T. Tera is accepted because sane ranges go up to 1 TΩ.
 /// </summary>
 /// <remarks>
-/// A comma is always the decimal separator (pt-BR): "0,125" is 0.125 and "1,250" is 1.250.
+/// A comma is always the decimal separator (pt-BR): "0,125" is 0.125, "1,250" is 1.250, and "1,000 Ω" is 1 Ω.
 /// A dot is also a decimal separator, except one ambiguous pattern: a non-zero integer part of
 /// 1–3 digits, a dot, exactly three digits, and no exponent ("1.000", "12.500"). That pattern is
 /// rejected. Use a comma for the decimal and do not write a thousands separator.
-/// More than one separator, or both separators in the same number, is rejected.
+/// More than one separator, or both separators in the same number, is rejected ("1,000,000", "1,5,2", "1,000.5").
 /// "0.125" and "1.000e3" stay decimal because the integer part is zero or an exponent is present.
 /// RKM codes ("4K7", "2R5") are accepted only for resistance, capacitance and inductance.
+/// Capacitance also accepts nano and micro RKM codes ("4n7" is 4.7 nF, "4u7" is 4.7 µF).
 /// The Unicode minus U+2212 is accepted wherever an ASCII hyphen-minus is.
+/// Hour, minute and day do not take a prefix.
 /// </remarks>
 public static class QuantityParser
 {
@@ -60,9 +62,9 @@ public static class QuantityParser
         }
 
         var unit = ResolveUnit(source, index, expected, text);
-        if (unit.Symbol == "h" && prefix != 1)
+        if (prefix != 1 && UnprefixedUnitName(unit.Symbol) is string blocked)
         {
-            throw new QuantityFormatException(Strings.PrefixedHour());
+            throw new QuantityFormatException(Strings.PrefixedUnit(blocked));
         }
 
         var value = number * prefix * unit.SiPerUnit;
@@ -92,7 +94,7 @@ public static class QuantityParser
             index++;
         }
 
-        if (index >= source.Length || source[index] is not ('R' or 'r' or 'K' or 'k' or 'M'))
+        if (index >= source.Length || !TryRkmMultiplier(source[index], expected, out var multiplier))
         {
             return false;
         }
@@ -112,8 +114,9 @@ public static class QuantityParser
             return false;
         }
 
-        // "4k" with nothing after it is ordinary prefix notation, not an RKM code.
-        if (fractionDigits == 0 && multiplierChar is 'k' or 'M')
+        // "4k" or "4n" with nothing after it is ordinary prefix notation, not an RKM code.
+        // "4K" stays an RKM code: K is not a prefix character.
+        if (fractionDigits == 0 && multiplierChar is 'k' or 'M' or 'n' or 'u' or 'U' or '\u00B5' or '\u03BC')
         {
             return false;
         }
@@ -133,12 +136,6 @@ public static class QuantityParser
                 / Math.Pow(10, fractionDigits);
         }
 
-        var multiplier = multiplierChar switch
-        {
-            'R' or 'r' => 1d,
-            'K' or 'k' => 1e3,
-            _ => 1e6,
-        };
         var unit = rest.Length == 0 ? KnownUnits.Canonical(expected) : ResolveToken(rest, expected, source);
         var value = sign * (integer + fraction) * multiplier * unit.SiPerUnit;
         RejectUnlessFinite(source, value);
@@ -302,8 +299,10 @@ public static class QuantityParser
         if (!double.IsFinite(number) && exponent is long overflowExponent && overflowExponent <= MaxPositiveExponent)
         {
             var reduced = mantissa + "E" + (overflowExponent - MaxPositiveExponent).ToString(CultureInfo.InvariantCulture);
+            // 1.7977e308 overflows double.Parse but is only a few ulps above MaxValue, so it is clamped.
+            // 1.8e308 is outside that band and must be rejected as non-finite.
             if (double.TryParse(reduced, NumberStyles.Float, CultureInfo.InvariantCulture, out var scaled)
-                && Math.Abs(scaled) <= 1.8)
+                && Math.Abs(scaled) < 1.8)
             {
                 number = Math.CopySign(double.MaxValue, scaled == 0 ? 1 : scaled);
             }
@@ -348,6 +347,39 @@ public static class QuantityParser
         while (index < source.Length && char.IsWhiteSpace(source[index]))
         {
             index++;
+        }
+    }
+
+    private static string? UnprefixedUnitName(string symbol) => symbol switch
+    {
+        "h" => "hora",
+        "min" => "minuto",
+        "d" => "dia",
+        _ => null,
+    };
+
+    private static bool TryRkmMultiplier(char symbol, Dimension dimension, out double multiplier)
+    {
+        switch (symbol)
+        {
+            case 'R' or 'r':
+                multiplier = 1d;
+                return true;
+            case 'K' or 'k':
+                multiplier = 1e3;
+                return true;
+            case 'M':
+                multiplier = 1e6;
+                return true;
+            case 'n' when dimension == Dimension.Capacitance:
+                multiplier = 1e-9;
+                return true;
+            case 'u' or 'U' or '\u00B5' or '\u03BC' when dimension == Dimension.Capacitance:
+                multiplier = 1e-6;
+                return true;
+            default:
+                multiplier = 0;
+                return false;
         }
     }
 

@@ -168,6 +168,127 @@ public class SolverEdgeTests
     }
 
     [Fact]
+    public void Low_current_diode_residual_tracks_the_operating_current()
+    {
+        // Is = 10 fA through 1 GΩ at 0.35 V. A 1 nA Newton band is about 1e5 times Is and
+        // leaves the diode current and the resistor current apart by tens of percent.
+        var model = new DiodeModel(1e-14, 1, 0);
+        var circuit = new CircuitBuilder()
+            .Add(new DcVoltageSourceComponent("V1", 0.35))
+            .Add(new ResistorComponent("R1", 1e9))
+            .Add(new DiodeComponent("D1", model))
+            .Add(new GroundComponent("GND"))
+            .Connect("N1", ("V1", "+"), ("R1", "1"))
+            .Connect("N2", ("R1", "2"), ("D1", "A"))
+            .Connect("0", ("V1", "-"), ("D1", "K"), ("GND", "g"))
+            .Build();
+
+        var solution = _solver.Solve(circuit);
+        var current = solution.Get("D1.I").Value;
+        var resistor = solution.Get("R1.I").Value;
+        current.Should().BeInRange(1e-12, 1e-8);
+        var scale = Math.Max(Math.Abs(current), model.SaturationCurrent);
+        Math.Abs(current - resistor).Should().BeLessThanOrEqualTo(1e-4 * scale);
+        solution.PowerBalanceOk.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Steep_diode_matches_the_full_model_current()
+    {
+        // Saturation of 1e-20 A clamps near 2 mA. The old slope test accepts that
+        // point while the model current and the resistor current still disagree.
+        var model = new DiodeModel(1e-20, 1, 0);
+        var circuit = new CircuitBuilder()
+            .Add(new DcVoltageSourceComponent("V1", 2))
+            .Add(new ResistorComponent("R1", 1))
+            .Add(new DiodeComponent("D1", model))
+            .Add(new GroundComponent("GND"))
+            .Connect("N1", ("V1", "+"), ("R1", "1"))
+            .Connect("N2", ("R1", "2"), ("D1", "A"))
+            .Connect("0", ("V1", "-"), ("D1", "K"), ("GND", "g"))
+            .Build();
+
+        var solution = _solver.Solve(circuit);
+        var current = solution.Get("D1.I").Value;
+        var resistor = solution.Get("R1.I").Value;
+        var scale = Math.Max(Math.Abs(current), model.SaturationCurrent);
+        Math.Abs(current - resistor).Should().BeLessThanOrEqualTo(1e-6 * scale);
+        current.Should().BePositive();
+        solution.PowerBalanceOk.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Unbalanced_diode_solution_is_rejected()
+    {
+        // A divider balances. The watt is injected through the test hook, not by a bad circuit.
+        var solver = new DcSolver { PowerBalanceInjectionWatts = 1 };
+        var act = () => solver.Solve(Divider());
+        act.Should().Throw<DcSolverConvergenceException>().WithMessage("*balanço de potência*");
+    }
+
+    [Fact]
+    public void In4148_at_50_volts_through_1_ohm_matches_the_resistor_current()
+    {
+        var solution = _solver.Solve(SeriesDiodes(1, 50, 1));
+        solution.PowerBalanceOk.Should().BeTrue();
+        CurrentsMatch(solution, "D1");
+    }
+
+    [Fact]
+    public void Microamp_diode_at_50_volts_through_1_ohm_matches_the_resistor_current()
+    {
+        var circuit = SeriesDiode(new DiodeModel(1e-6, 1, 0), 50, 1);
+        var solution = _solver.Solve(circuit);
+        solution.PowerBalanceOk.Should().BeTrue();
+        CurrentsMatch(solution, "D1");
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    public void Series_diodes_at_minus_10_kilovolts_share_the_resistor_current(int count)
+    {
+        var solution = _solver.Solve(SeriesDiodes(count, -10_000, 1000));
+        solution.PowerBalanceOk.Should().BeTrue();
+        var resistor = solution.Get("R1.I").Value;
+        for (var index = 1; index <= count; index++)
+        {
+            solution.Get($"D{index}.I").Value.Should().BeApproximately(resistor, 1e-9);
+        }
+    }
+
+    [Fact]
+    public void With_expression_rejects_a_negative_saturation_current()
+    {
+        var saturation = () => DiodePresets.In4148 with { SaturationCurrent = -1 };
+        saturation.Should().Throw<ArgumentOutOfRangeException>().WithMessage("*corrente de saturação (IS)*");
+
+        var emission = () => DiodePresets.In4148 with { EmissionCoefficient = 0 };
+        emission.Should().Throw<ArgumentOutOfRangeException>().WithMessage("*coeficiente de emissão (N)*");
+
+        var series = () => DiodePresets.In4148 with { SeriesResistance = double.NaN };
+        series.Should().Throw<ArgumentOutOfRangeException>().WithMessage("*resistência série (RS)*");
+    }
+
+    [Theory]
+    [InlineData(0d, 1d, 0d)]
+    [InlineData(-1e-9, 1d, 0d)]
+    [InlineData(double.NaN, 1d, 0d)]
+    [InlineData(double.PositiveInfinity, 1d, 0d)]
+    [InlineData(1e-9, 0d, 0d)]
+    [InlineData(1e-9, -1d, 0d)]
+    [InlineData(1e-9, double.NaN, 0d)]
+    [InlineData(1e-9, 1d, -1d)]
+    [InlineData(1e-9, 1d, double.NaN)]
+    [InlineData(1e-9, 1d, double.NegativeInfinity)]
+    public void Invalid_diode_parameters_are_rejected(double saturationCurrent, double emissionCoefficient, double seriesResistance)
+    {
+        var act = () => new DiodeModel(saturationCurrent, emissionCoefficient, seriesResistance);
+        act.Should().Throw<ArgumentOutOfRangeException>().WithMessage("*finito*");
+    }
+
+    [Fact]
     public void Stiff_forward_diode_converges_with_junction_limiting()
     {
         var solution = _solver.Solve(SeriesDiodes(1, 10, 1));
@@ -216,6 +337,23 @@ public class SolverEdgeTests
             .Build();
         return _solver.Solve(circuit).PowerRatings.Single().Message;
     }
+
+    private static void CurrentsMatch(DcSolution solution, string diodeId)
+    {
+        var resistor = solution.Get("R1.I").Value;
+        var diode = solution.Get(diodeId + ".I").Value;
+        Math.Abs(diode - resistor).Should().BeLessThanOrEqualTo(Math.Max(1e-9, 1e-9 * Math.Abs(resistor)));
+    }
+
+    private static CircuitModel SeriesDiode(DiodeModel model, double volts, double ohms) => new CircuitBuilder()
+        .Add(new DcVoltageSourceComponent("V1", volts))
+        .Add(new ResistorComponent("R1", ohms))
+        .Add(new DiodeComponent("D1", model))
+        .Add(new GroundComponent("GND"))
+        .Connect("N1", ("V1", "+"), ("R1", "1"))
+        .Connect("N2", ("R1", "2"), ("D1", "A"))
+        .Connect("0", ("V1", "-"), ("D1", "K"), ("GND", "g"))
+        .Build();
 
     private static CircuitModel SeriesDiodes(int count, double volts, double ohms)
     {

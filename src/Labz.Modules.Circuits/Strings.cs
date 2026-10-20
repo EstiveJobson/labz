@@ -19,6 +19,8 @@ internal static class Strings
 
     public static string NoConvergence(string components) => Format("NoConvergence", components);
 
+    public static string PowerBalance(string components) => Format("PowerBalance", components);
+
     public static string PowerRatingOk => Get("PowerRatingOk");
 
     public static string PowerRatingWarning => Get("PowerRatingWarning");
@@ -46,6 +48,12 @@ internal static class Strings
         Format("PinConnectedTwice", componentId, pin);
 
     public static string PositiveFinite(string name) => Format("PositiveFinite", name);
+
+    public static string DiodeSaturationCurrent() => Get("DiodeSaturationCurrent");
+
+    public static string DiodeEmissionCoefficient() => Get("DiodeEmissionCoefficient");
+
+    public static string DiodeSeriesResistance() => Get("DiodeSeriesResistance");
 
     public static string NonNegativeFinite(string name) => Format("NonNegativeFinite", name);
 

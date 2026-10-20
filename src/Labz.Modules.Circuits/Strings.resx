@@ -27,6 +27,9 @@
   <data name="NoConvergence" xml:space="preserve">
     <value>O solver de corrente contínua não convergiu. Componentes: {0}.</value>
   </data>
+  <data name="PowerBalance" xml:space="preserve">
+    <value>O balanço de potência não fechou. Componentes: {0}.</value>
+  </data>
   <data name="PowerRatingOk" xml:space="preserve">
     <value>OK</value>
   </data>
@@ -62,6 +65,15 @@
   </data>
   <data name="PositiveFinite" xml:space="preserve">
     <value>{0} deve ser um número finito maior que zero.</value>
+  </data>
+  <data name="DiodeSaturationCurrent" xml:space="preserve">
+    <value>corrente de saturação (IS)</value>
+  </data>
+  <data name="DiodeEmissionCoefficient" xml:space="preserve">
+    <value>coeficiente de emissão (N)</value>
+  </data>
+  <data name="DiodeSeriesResistance" xml:space="preserve">
+    <value>resistência série (RS)</value>
   </data>
   <data name="NonNegativeFinite" xml:space="preserve">
     <value>{0} deve ser um número finito maior ou igual a zero.</value>
